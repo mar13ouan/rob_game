@@ -3,8 +3,8 @@
   "properties": {
     "Name": "StarterMap"
   },
-  "children": {
-    "Ground": {
+  "children": [
+    {
       "className": "Part",
       "properties": {
         "Name": "Ground",
@@ -15,7 +15,7 @@
         "Color": [0.298, 0.604, 0.298]
       }
     },
-    "PlayerSpawn": {
+    {
       "className": "SpawnLocation",
       "properties": {
         "Name": "PlayerSpawn",
@@ -24,7 +24,7 @@
         "CanCollide": false
       }
     },
-    "TrainingFence": {
+    {
       "className": "Part",
       "properties": {
         "Name": "TrainingFence",
@@ -35,7 +35,7 @@
         "Material": "WoodPlanks"
       }
     },
-    "TrainingSign": {
+    {
       "className": "Part",
       "properties": {
         "Name": "TrainingSign",
@@ -45,7 +45,7 @@
         "Color": [0.992, 0.788, 0.157]
       }
     },
-    "StarterGuideMarker": {
+    {
       "className": "Part",
       "properties": {
         "Name": "StarterGuideMarker",
@@ -56,5 +56,5 @@
         "Material": "SmoothPlastic"
       }
     }
-  }
+  ]
 }
