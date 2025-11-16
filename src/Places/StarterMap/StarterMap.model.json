@@ -1,6 +1,6 @@
 {
   "name": "StarterMap",
-  "className": "Folder",
+  "className": "Model",
   "children": [
     {
       "name": "MeadowGround",
