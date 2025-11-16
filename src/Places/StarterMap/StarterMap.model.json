@@ -1,0 +1,207 @@
+{
+  "className": "Folder",
+  "properties": {"Name": "StarterMap"},
+  "children": [
+    {"className": "Part","properties": {"Name": "MeadowGround","Anchored": true,"Size": [256, 1, 256],"Position": [0, -0.5, 0],"Material": "Grass","Color": [0.298, 0.604, 0.298]}},
+    {"className": "Part","properties": {"Name": "VillagePath","Anchored": true,"Size": [80, 0.2, 24],"Position": [0, 0.1, -60],"Material": "Cobblestone","Color": [0.545, 0.451, 0.314]}},
+    {"className": "Part","properties": {"Name": "TrainingPlate","Anchored": true,"Size": [80, 0.2, 40],"Position": [0, 0.1, 52],"Material": "Concrete","Color": [0.392, 0.427, 0.463]}},
+    {"className": "Part","properties": {"Name": "TrainingFenceLeft","Anchored": true,"Size": [1, 6, 50],"Position": [-40, 3, 52],"Color": [0.349, 0.2, 0.078],"Material": "WoodPlanks"}},
+    {"className": "Part","properties": {"Name": "TrainingFenceRight","Anchored": true,"Size": [1, 6, 50],"Position": [40, 3, 52],"Color": [0.349, 0.2, 0.078],"Material": "WoodPlanks"}},
+    {"className": "Part","properties": {"Name": "TrainingGate","Anchored": true,"Size": [80, 6, 1],"Position": [0, 3, 30],"Color": [0.545, 0.271, 0.075],"Material": "WoodPlanks"}},
+    {
+      "className": "Part",
+      "properties": {
+        "Name": "TrainingBanner",
+        "Anchored": true,
+        "Size": [20, 5, 0.5],
+        "Position": [0, 6, 28],
+        "Color": [0.988, 0.835, 0.325],
+        "Material": "Neon"
+      },
+      "children": [
+        {
+          "className": "SurfaceGui",
+          "properties": {
+            "Name": "BannerGui",
+            "Face": "Front",
+            "CanvasSize": [800, 200],
+            "AlwaysOnTop": true
+          },
+          "children": [
+            {
+              "className": "TextLabel",
+              "properties": {
+                "Name": "BannerText",
+                "BackgroundTransparency": 1,
+                "Font": "GothamBold",
+                "Text": "TRAINING YARD",
+                "TextColor3": [0.176, 0.196, 0.278],
+                "TextScaled": true,
+                "Size": [1, 0, 1, 0]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {"className": "SpawnLocation","properties": {"Name": "PlayerSpawn","Position": [0, 2, -80],"Transparency": 1,"CanCollide": false}},
+    {
+      "className": "Model",
+      "properties": {"Name": "StarterGuideNPC","PrimaryPart": "GuideTorso"},
+      "children": [
+        {
+          "className": "Part",
+          "properties": {
+            "Name": "GuideTorso",
+            "Size": [3, 5, 1.5],
+            "Anchored": true,
+            "CanCollide": true,
+            "Position": [-16, 2.5, -72],
+            "Color": [0.933, 0.796, 0.654],
+            "Material": "SmoothPlastic"
+          },
+          "children": [
+            {
+              "className": "ProximityPrompt",
+              "properties": {
+                "Name": "GuidePrompt",
+                "ActionText": "Talk",
+                "ObjectText": "PNG Guide",
+                "HoldDuration": 0,
+                "MaxActivationDistance": 12
+              }
+            },
+            {
+              "className": "BillboardGui",
+              "properties": {
+                "Name": "GuideBillboard",
+                "AlwaysOnTop": true,
+                "Size": [0, 140, 0, 40],
+                "StudsOffset": [0, 6, 0]
+              },
+              "children": [
+                {
+                  "className": "TextLabel",
+                  "properties": {
+                    "Name": "GuideName",
+                    "BackgroundTransparency": 1,
+                    "Font": "GothamBold",
+                    "Text": "PNGuide",
+                    "TextColor3": [1, 1, 1],
+                    "TextScaled": true,
+                    "Size": [1, 0, 1, 0]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {"className": "Part","properties": {"Name": "GuideHead","Size": [3, 3, 1],"Anchored": true,"CanCollide": false,"Position": [-16, 6, -72],"Color": [0.992, 0.898, 0.757],"Material": "SmoothPlastic"}},
+        {"className": "Part","properties": {"Name": "GuideHat","Size": [3.5, 0.6, 3.5],"Anchored": true,"CanCollide": false,"Position": [-16, 7.5, -72],"Color": [0.196, 0.263, 0.4],"Material": "Fabric"}}
+      ]
+    },
+    {
+      "className": "Model",
+      "properties": {"Name": "StarterEggDisplay","PrimaryPart": "Pedestal"},
+      "children": [
+        {"className": "Part","properties": {"Name": "Pedestal","Anchored": true,"Size": [4, 1, 4],"Position": [-8, 0.5, -68],"Color": [0.474, 0.333, 0.188],"Material": "WoodPlanks"}},
+        {"className": "Part","properties": {"Name": "Egg","Anchored": true,"Shape": "Ball","Size": [1.6, 2.2, 1.6],"Position": [-8, 1.8, -68],"Color": [1, 0.949, 0.8],"Material": "SmoothPlastic"}}
+      ]
+    },
+    {
+      "className": "Folder",
+      "properties": {"Name": "TrainingStations"},
+      "children": [
+        {
+          "className": "Part",
+          "properties": {
+            "Name": "PowerDummy",
+            "Anchored": true,
+            "Size": [3, 5, 3],
+            "Position": [-16, 2.5, 52],
+            "Color": [0.8, 0.443, 0.137],
+            "Material": "Wood",
+            "$attributes": {
+              "TrainingStat": "Power",
+              "StatGain": 2,
+              "DisplayName": "Punch Dummy",
+              "Cooldown": 4,
+              "SessionLength": 1.5
+            }
+          },
+          "children": [
+            {
+              "className": "ProximityPrompt",
+              "properties": {
+                "ActionText": "Train",
+                "ObjectText": "Punch Dummy",
+                "HoldDuration": 0.5,
+                "MaxActivationDistance": 8
+              }
+            }
+          ]
+        },
+        {
+          "className": "Part",
+          "properties": {
+            "Name": "VitalityRings",
+            "Anchored": true,
+            "Shape": "Cylinder",
+            "Size": [2, 4, 2],
+            "Position": [0, 2, 58],
+            "Orientation": [0, 0, 90],
+            "Color": [0.533, 0.8, 0.933],
+            "Material": "Neon",
+            "$attributes": {
+              "TrainingStat": "Vitality",
+              "StatGain": 2,
+              "DisplayName": "Endurance Hoops",
+              "Cooldown": 4,
+              "SessionLength": 1.5
+            }
+          },
+          "children": [
+            {
+              "className": "ProximityPrompt",
+              "properties": {
+                "ActionText": "Train",
+                "ObjectText": "Endurance Hoops",
+                "HoldDuration": 0.5,
+                "MaxActivationDistance": 8
+              }
+            }
+          ]
+        },
+        {
+          "className": "Part",
+          "properties": {
+            "Name": "FocusCrystal",
+            "Anchored": true,
+            "Size": [2, 6, 2],
+            "Position": [16, 3, 52],
+            "Color": [0.62, 0.325, 0.839],
+            "Material": "Neon",
+            "$attributes": {
+              "TrainingStat": "Focus",
+              "StatGain": 2,
+              "DisplayName": "Focus Crystal",
+              "Cooldown": 4,
+              "SessionLength": 1.5
+            }
+          },
+          "children": [
+            {
+              "className": "ProximityPrompt",
+              "properties": {
+                "ActionText": "Meditate",
+                "ObjectText": "Focus Crystal",
+                "HoldDuration": 0.5,
+                "MaxActivationDistance": 8
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
