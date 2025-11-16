@@ -1,0 +1,22 @@
+{
+  "name": "rob_game",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "$path": "src/ServerScriptService"
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "$path": "src/StarterPlayerScripts"
+      }
+    },
+    "ReplicatedStorage": {
+      "Common": {
+        "$path": "src/ReplicatedStorage/Common"
+      },
+      "Components": {
+        "$path": "src/ReplicatedStorage/Components"
+      }
+    }
+  }
+}
