@@ -1,0 +1,60 @@
+{
+  "className": "Folder",
+  "properties": {
+    "Name": "StarterMap"
+  },
+  "children": {
+    "Ground": {
+      "className": "Part",
+      "properties": {
+        "Name": "Ground",
+        "Anchored": true,
+        "Size": [256, 1, 256],
+        "Position": [0, -0.5, 0],
+        "Material": "Grass",
+        "Color": [0.298, 0.604, 0.298]
+      }
+    },
+    "PlayerSpawn": {
+      "className": "SpawnLocation",
+      "properties": {
+        "Name": "PlayerSpawn",
+        "Position": [0, 2, -80],
+        "Transparency": 1,
+        "CanCollide": false
+      }
+    },
+    "TrainingFence": {
+      "className": "Part",
+      "properties": {
+        "Name": "TrainingFence",
+        "Anchored": true,
+        "Size": [80, 6, 1],
+        "Position": [0, 3, 40],
+        "Color": [0.545, 0.271, 0.075],
+        "Material": "WoodPlanks"
+      }
+    },
+    "TrainingSign": {
+      "className": "Part",
+      "properties": {
+        "Name": "TrainingSign",
+        "Anchored": true,
+        "Size": [8, 3, 1],
+        "Position": [0, 3, 45],
+        "Color": [0.992, 0.788, 0.157]
+      }
+    },
+    "StarterGuideMarker": {
+      "className": "Part",
+      "properties": {
+        "Name": "StarterGuideMarker",
+        "Anchored": true,
+        "Size": [4, 6, 4],
+        "Position": [-16, 3, -72],
+        "Color": [1, 0.867, 0.616],
+        "Material": "SmoothPlastic"
+      }
+    }
+  }
+}
