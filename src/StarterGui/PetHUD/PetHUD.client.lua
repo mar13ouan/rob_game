@@ -19,7 +19,7 @@ screenGui.Parent = playerGui
 local container = Instance.new("Frame")
 container.AnchorPoint = Vector2.new(0, 1)
 container.Position = UDim2.new(0, 16, 1, -16)
-container.Size = UDim2.new(0, 260, 0, 210)
+container.Size = UDim2.new(0, 280, 0, 240)
 container.BackgroundColor3 = Color3.fromRGB(25, 30, 35)
 container.BackgroundTransparency = 0.1
 container.BorderSizePixel = 0
@@ -63,16 +63,37 @@ for index, statName in ipairs(statNames) do
     statLabels[statName] = label
 end
 
-local evolutionLabel = Instance.new("TextLabel")
-evolutionLabel.BackgroundTransparency = 1
-evolutionLabel.Font = Enum.Font.GothamSemibold
-evolutionLabel.TextColor3 = Color3.fromRGB(255, 240, 200)
-evolutionLabel.TextWrapped = true
-evolutionLabel.TextXAlignment = Enum.TextXAlignment.Left
-evolutionLabel.Position = UDim2.new(0, 10, 0, 122)
-evolutionLabel.Size = UDim2.new(1, -20, 0, 36)
-evolutionLabel.Text = "Next evolution: --"
-evolutionLabel.Parent = container
+local evolutionSection = Instance.new("Frame")
+evolutionSection.Position = UDim2.new(0, 10, 0, 126)
+evolutionSection.Size = UDim2.new(1, -20, 0, 92)
+evolutionSection.BackgroundTransparency = 0.2
+evolutionSection.BackgroundColor3 = Color3.fromRGB(15, 20, 26)
+evolutionSection.Parent = container
+
+local evolutionCorner = Instance.new("UICorner")
+evolutionCorner.CornerRadius = UDim.new(0, 6)
+evolutionCorner.Parent = evolutionSection
+
+local evolutionTitle = Instance.new("TextLabel")
+evolutionTitle.BackgroundTransparency = 1
+evolutionTitle.Font = Enum.Font.GothamSemibold
+evolutionTitle.TextColor3 = Color3.fromRGB(255, 240, 200)
+evolutionTitle.TextXAlignment = Enum.TextXAlignment.Left
+evolutionTitle.Text = "Evolution Goals"
+evolutionTitle.Size = UDim2.new(1, -10, 0, 20)
+evolutionTitle.Position = UDim2.new(0, 6, 0, 4)
+evolutionTitle.Parent = evolutionSection
+
+local evolutionList = Instance.new("Frame")
+evolutionList.BackgroundTransparency = 1
+evolutionList.Position = UDim2.new(0, 6, 0, 26)
+evolutionList.Size = UDim2.new(1, -12, 1, -32)
+evolutionList.Parent = evolutionSection
+
+local evolutionLayout = Instance.new("UIListLayout")
+evolutionLayout.FillDirection = Enum.FillDirection.Vertical
+evolutionLayout.Padding = UDim.new(0, 2)
+evolutionLayout.Parent = evolutionList
 
 local statusLabel = Instance.new("TextLabel")
 statusLabel.BackgroundTransparency = 0.35
@@ -81,14 +102,14 @@ statusLabel.Font = Enum.Font.Gotham
 statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 statusLabel.TextWrapped = true
 statusLabel.TextXAlignment = Enum.TextXAlignment.Left
-statusLabel.Position = UDim2.new(0, 10, 0, 162)
-statusLabel.Size = UDim2.new(1, -20, 0, 40)
+statusLabel.Position = UDim2.new(0, 10, 1, -44)
+statusLabel.Size = UDim2.new(1, -20, 0, 34)
 statusLabel.Visible = false
 statusLabel.Parent = container
 
 local dialogueFrame = Instance.new("Frame")
 dialogueFrame.AnchorPoint = Vector2.new(0.5, 1)
-dialogueFrame.Position = UDim2.new(0.5, 0, 1, -230)
+dialogueFrame.Position = UDim2.new(0.5, 0, 1, -260)
 dialogueFrame.Size = UDim2.new(0, 320, 0, 120)
 dialogueFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 25)
 dialogueFrame.BackgroundTransparency = 0.2
@@ -115,6 +136,7 @@ dialogueText.Text = ""
 
 local statusTweenId = 0
 local dialogueTweenId = 0
+local evolutionEntries: {[string]: TextLabel} = {}
 
 local function showStatus(message: string)
     statusTweenId += 1
@@ -146,6 +168,65 @@ local function showDialogue(lines)
     end)
 end
 
+local function formatEvolutionText(target)
+    local progress = target.Progress or {}
+    local statSegments = {}
+
+    for statName, info in pairs(progress) do
+        local current = info.Current or 0
+        local required = info.Required or 0
+        local remaining = info.SessionsRemaining or 0
+        if remaining <= 0 then
+            table.insert(statSegments, string.format("%s ready (%d/%d)", statName, current, required))
+        else
+            local plural = remaining == 1 and "training" or "trainings"
+            table.insert(statSegments, string.format("%s %d/%d (%d %s left)", statName, current, required, remaining, plural))
+        end
+    end
+
+    local requirementsText = #statSegments > 0 and table.concat(statSegments, " | ") or "Train to unlock"
+
+    if target.Ready then
+        return string.format("%s ready to evolve!", target.DisplayName), Color3.fromRGB(126, 255, 191)
+    end
+
+    return string.format("%s: %s", target.DisplayName, requirementsText), Color3.fromRGB(255, 214, 170)
+end
+
+local function syncEvolutions(targets)
+    local active: {[string]: boolean} = {}
+    for _, target in ipairs(targets or {}) do
+        local label = evolutionEntries[target.Id]
+        if not label then
+            label = Instance.new("TextLabel")
+            label.BackgroundTransparency = 1
+            label.Font = Enum.Font.Gotham
+            label.TextWrapped = true
+            label.TextXAlignment = Enum.TextXAlignment.Left
+            label.AutomaticSize = Enum.AutomaticSize.Y
+            label.Size = UDim2.new(1, 0, 0, 20)
+            label.Parent = evolutionList
+            evolutionEntries[target.Id] = label
+        end
+
+        local text, color = formatEvolutionText(target)
+        label.Text = text
+        label.TextColor3 = color
+        label.Visible = true
+        active[target.Id] = true
+    end
+
+    for id, label in pairs(evolutionEntries) do
+        if not active[id] then
+            label.Visible = false
+        end
+    end
+
+    if not targets or #targets == 0 then
+        evolutionTitle.Text = "Evolution Goals"
+    end
+end
+
 local function updateStats(payload)
     if payload.MonsterId then
         title.Text = string.format("%s Status", payload.MonsterId)
@@ -158,20 +239,7 @@ local function updateStats(payload)
         end
     end
 
-    if payload.NextEvolution then
-        local evo = payload.NextEvolution
-        local reqText = {}
-        for statName, requirement in pairs(evo.Requirements or {}) do
-            table.insert(reqText, string.format("%s %d", statName, requirement))
-        end
-        evolutionLabel.Text = string.format(
-            "Next evolution: %s (%s)",
-            evo.DisplayName,
-            table.concat(reqText, ", ")
-        )
-    else
-        evolutionLabel.Text = "Next evolution: Final form reached"
-    end
+    syncEvolutions(payload.EvolutionTargets)
 end
 
 Remotes.PetStatUpdated.OnClientEvent:Connect(updateStats)

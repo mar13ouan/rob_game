@@ -8,6 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local Remotes = require(ReplicatedStorage.Common.Remotes)
+local TrainingConfig = require(ReplicatedStorage.Common.TrainingConfig)
 local PetService = require(ServerScriptService:WaitForChild("PetService"))
 
 local TrainingService = {}
@@ -35,13 +36,13 @@ local function wireStation(station: BasePart)
     end
 
     local statToTrain = station:GetAttribute("TrainingStat") or "Power"
-    local statGain = station:GetAttribute("StatGain") or 1
-    local cooldown = station:GetAttribute("Cooldown") or 4
-    local sessionLength = station:GetAttribute("SessionLength") or 1.5
+    local statGain = station:GetAttribute("StatGain") or TrainingConfig.GetStatGain(statToTrain)
+    local cooldown = station:GetAttribute("Cooldown") or TrainingConfig.DEFAULT_COOLDOWN
+    local sessionLength = station:GetAttribute("SessionLength") or TrainingConfig.DEFAULT_SESSION_LENGTH
 
     local prompt = getPrompt(station)
     prompt.ObjectText = station:GetAttribute("DisplayName") or prompt.ObjectText
-    prompt.ActionText = "Train"
+    prompt.ActionText = string.format("+%d %s", statGain, statToTrain)
 
     local lastUse: {[number]: number} = {}
     prompt.Triggered:Connect(function(player)

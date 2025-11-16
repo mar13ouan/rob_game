@@ -7,6 +7,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Remotes = require(ReplicatedStorage.Common.Remotes)
+local TrainingConfig = require(ReplicatedStorage.Common.TrainingConfig)
 local MonsterConfig = require(script.Parent:WaitForChild("MonsterConfig"))
 
 export type PetState = {
@@ -43,23 +44,102 @@ local function getMonster(monsterId: string)
     return monster
 end
 
-function PetService:_getNextEvolution(petState: PetState)
+function PetService:_buildEvolutionTargets(petState: PetState)
     local monster = getMonster(petState.MonsterId)
+    local targets = {}
+
     for _, evolution in monster.Evolutions do
-        local requirementsMet = true
-        for stat, requirement in evolution.Requirements do
-            if requirement and petState.Stats[stat] < requirement then
-                requirementsMet = false
-                break
+        local requirements = evolution.Requirements or {}
+        local progress = {}
+        local ready = true
+
+        for stat, requirement in pairs(requirements) do
+            local current = petState.Stats[stat] or 0
+            local diff = math.max(0, requirement - current)
+            if diff > 0 then
+                ready = false
             end
+
+            local statGain = TrainingConfig.GetStatGain(stat)
+            local sessions = statGain > 0 and math.ceil(diff / statGain) or 0
+
+            progress[stat] = {
+                Current = current,
+                Required = requirement,
+                SessionsRemaining = diff <= 0 and 0 or sessions,
+                StatGain = statGain,
+            }
         end
 
-        if not requirementsMet then
-            return evolution
+        table.insert(targets, {
+            Id = evolution.Id,
+            DisplayName = evolution.DisplayName,
+            Requirements = requirements,
+            Progress = progress,
+            Ready = ready,
+        })
+    end
+
+    return targets
+end
+
+local function targetMargin(target)
+    local margin = -math.huge
+    for _, info in pairs(target.Progress or {}) do
+        local diff = (info.Current or 0) - (info.Required or 0)
+        if diff > margin then
+            margin = diff
         end
     end
 
-    return monster.Evolutions[1]
+    if margin == -math.huge then
+        margin = 0
+    end
+
+    return margin
+end
+
+function PetService:_publishPetState(player: Player, petState: PetState, targets)
+    if not petState then
+        return
+    end
+
+    local monster = getMonster(petState.MonsterId)
+    Remotes.PetStatUpdated:FireClient(player, {
+        MonsterId = petState.MonsterId,
+        Stats = petState.Stats,
+        Attacks = monster.Attacks,
+        EvolutionTargets = targets or self:_buildEvolutionTargets(petState),
+    })
+end
+
+function PetService:_tryEvolve(player: Player, petState: PetState, targets)
+    local monster = getMonster(petState.MonsterId)
+    if #monster.Evolutions == 0 then
+        return false
+    end
+
+    targets = targets or self:_buildEvolutionTargets(petState)
+
+    local bestTarget = nil
+    local bestMargin = -math.huge
+
+    for _, target in targets do
+        if target.Ready then
+            local margin = targetMargin(target)
+            if margin > bestMargin then
+                bestMargin = margin
+                bestTarget = target
+            end
+        end
+    end
+
+    if bestTarget then
+        self:_applyEvolution(player, petState, bestTarget.Id)
+        return true
+    end
+
+    return false
 end
 
 function PetService.Init()
@@ -95,12 +175,7 @@ function PetService:_hatchEgg(player: Player, petId: string)
 
     self._pets[player.UserId] = petState
 
-    Remotes.PetStatUpdated:FireClient(player, {
-        MonsterId = petState.MonsterId,
-        Stats = petState.Stats,
-        Attacks = monster.Attacks,
-        NextEvolution = self:_getNextEvolution(petState),
-    })
+    self:_publishPetState(player, petState)
 end
 
 function PetService:AddExperience(player: Player, amount: number)
@@ -125,36 +200,9 @@ function PetService:AddStat(player: Player, statName: string, delta: number)
 
     petState.Stats[statName] += delta
 
-    local monster = getMonster(petState.MonsterId)
-    Remotes.PetStatUpdated:FireClient(player, {
-        MonsterId = petState.MonsterId,
-        Stats = petState.Stats,
-        Attacks = monster.Attacks,
-        NextEvolution = self:_getNextEvolution(petState),
-    })
-
-    self:_tryEvolve(player, petState)
-end
-
-function PetService:_tryEvolve(player: Player, petState: PetState)
-    local monster = getMonster(petState.MonsterId)
-    if #monster.Evolutions == 0 then
-        return
-    end
-
-    for _, evolution in monster.Evolutions do
-        local requirementsMet = true
-        for stat, requirement in evolution.Requirements do
-            if requirement and petState.Stats[stat] < requirement then
-                requirementsMet = false
-                break
-            end
-        end
-
-        if requirementsMet then
-            self:_applyEvolution(player, petState, evolution.Id)
-            break
-        end
+    local targets = self:_buildEvolutionTargets(petState)
+    if not self:_tryEvolve(player, petState, targets) then
+        self:_publishPetState(player, petState, targets)
     end
 end
 
@@ -165,7 +213,14 @@ function PetService:_applyEvolution(player: Player, petState: PetState, nextId: 
 
     local evolvedMonster = getMonster(nextId)
     petState.MonsterId = evolvedMonster.Id
-    petState.Stats = cloneStats(evolvedMonster.BaseStats)
+    local newStats = cloneStats(petState.Stats)
+    for statName, baseValue in pairs(evolvedMonster.BaseStats) do
+        local current = newStats[statName]
+        if current == nil or current < baseValue then
+            newStats[statName] = baseValue
+        end
+    end
+    petState.Stats = newStats
     petState.Experience = 0
 
     Remotes.PetEvolution:FireClient(player, {
@@ -173,11 +228,7 @@ function PetService:_applyEvolution(player: Player, petState: PetState, nextId: 
         DisplayName = evolvedMonster.DisplayName,
     })
 
-    Remotes.PetStatUpdated:FireClient(player, {
-        MonsterId = petState.MonsterId,
-        Stats = petState.Stats,
-        Attacks = evolvedMonster.Attacks,
-    })
+    self:_publishPetState(player, petState)
 end
 
 return PetService

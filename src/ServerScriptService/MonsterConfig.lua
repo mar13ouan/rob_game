@@ -71,14 +71,14 @@ local Monsters: {[string]: Monster} = {
                 Id = "Thornback",
                 DisplayName = "Thornback",
                 Requirements = {
-                    Power = 28,
+                    Power = 25,
                 },
             },
             {
                 Id = "Aurorashade",
                 DisplayName = "Aurorashade",
                 Requirements = {
-                    Focus = 26,
+                    Focus = 20,
                 },
             },
         },
