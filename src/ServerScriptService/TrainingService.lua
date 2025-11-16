@@ -1,7 +1,7 @@
 --!strict
--- Spawns placeholder training stations inside the StarterMap so players can
--- boost pet stats on day one.  Designers can replace these with bespoke models
--- later; the service simply wires up ProximityPrompts to PetService.
+-- Wires up the hand-crafted training stations that live inside the StarterMap.
+-- Each station is a BasePart with TrainingStat/StatGain attributes and a
+-- ProximityPrompt child that lets the player start a mini session.
 
 local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -12,56 +12,42 @@ local PetService = require(ServerScriptService:WaitForChild("PetService"))
 
 local TrainingService = {}
 
-local STATIONS = {
-    {
-        Name = "PowerDummy",
-        Label = "Punch Dummy",
-        Position = Vector3.new(-10, 2, 50),
-        Stat = "Power",
-        Gain = 2,
-    },
-    {
-        Name = "VitalityRings",
-        Label = "Endurance Rings",
-        Position = Vector3.new(0, 2, 55),
-        Stat = "Vitality",
-        Gain = 2,
-    },
-    {
-        Name = "FocusStone",
-        Label = "Focus Stone",
-        Position = Vector3.new(10, 2, 50),
-        Stat = "Focus",
-        Gain = 2,
-    },
-}
+local WIRED_STATIONS: {[Instance]: boolean} = {}
 
-local function createStation(parent: Instance, definition)
-    local part = Instance.new("Part")
-    part.Name = definition.Name
-    part.Size = Vector3.new(4, 4, 4)
-    part.Anchored = true
-    part.CanCollide = true
-    part.Material = Enum.Material.Slate
-    part.CFrame = CFrame.new(definition.Position)
-    part:SetAttribute("TrainingStat", definition.Stat)
-    part:SetAttribute("StatGain", definition.Gain)
-    part:SetAttribute("Cooldown", 4)
-    part:SetAttribute("SessionLength", 1.5)
-    part.Parent = parent
+local function getPrompt(station: BasePart)
+    local prompt = station:FindFirstChildWhichIsA("ProximityPrompt")
+    if not prompt then
+        prompt = Instance.new("ProximityPrompt")
+        prompt.Name = "TrainPrompt"
+        prompt.ActionText = "Train"
+        prompt.ObjectText = station.Name
+        prompt.HoldDuration = 1
+        prompt.MaxActivationDistance = 8
+        prompt.Parent = station
+    end
 
-    local prompt = Instance.new("ProximityPrompt")
-    prompt.ObjectText = definition.Label
+    return prompt
+end
+
+local function wireStation(station: BasePart)
+    if WIRED_STATIONS[station] then
+        return
+    end
+
+    local statToTrain = station:GetAttribute("TrainingStat") or "Power"
+    local statGain = station:GetAttribute("StatGain") or 1
+    local cooldown = station:GetAttribute("Cooldown") or 4
+    local sessionLength = station:GetAttribute("SessionLength") or 1.5
+
+    local prompt = getPrompt(station)
+    prompt.ObjectText = station:GetAttribute("DisplayName") or prompt.ObjectText
     prompt.ActionText = "Train"
-    prompt.HoldDuration = 1
-    prompt.MaxActivationDistance = 8
-    prompt.Parent = part
 
-    local lastUse = {}
+    local lastUse: {[number]: number} = {}
     prompt.Triggered:Connect(function(player)
         local now = os.clock()
         local previous = lastUse[player.UserId] or 0
-        if now - previous < 4 then
+        if now - previous < cooldown then
             Remotes.TrainingPrompt:FireClient(player, {
                 Success = false,
                 Reason = "Catch your breath first!",
@@ -70,30 +56,42 @@ local function createStation(parent: Instance, definition)
         end
 
         lastUse[player.UserId] = now
-        task.delay(1.5, function()
-            PetService:AddStat(player, definition.Stat, definition.Gain)
+        task.delay(sessionLength, function()
+            PetService:AddStat(player, statToTrain, statGain)
             Remotes.TrainingPrompt:FireClient(player, {
                 Success = true,
-                Stat = definition.Stat,
-                Gain = definition.Gain,
+                Stat = statToTrain,
+                Gain = statGain,
             })
         end)
     end)
+
+    WIRED_STATIONS[station] = true
+end
+
+local function connectFolder(folder: Instance)
+    local function tryWire(instance: Instance)
+        if instance:IsA("BasePart") and instance:GetAttribute("TrainingStat") then
+            wireStation(instance)
+        end
+    end
+
+    for _, descendant in folder:GetDescendants() do
+        tryWire(descendant)
+    end
+
+    folder.DescendantAdded:Connect(tryWire)
 end
 
 function TrainingService.Init()
     local map = Workspace:WaitForChild("StarterMap")
-    local folder = map:FindFirstChild("TrainingStations") or Instance.new("Folder")
-    folder.Name = "TrainingStations"
-    folder.Parent = map
-
-    for _, child in folder:GetChildren() do
-        child:Destroy()
+    local stations = map:WaitForChild("TrainingStations", 10)
+    if not stations then
+        warn("[TrainingService] Could not find TrainingStations folder")
+        return
     end
 
-    for _, definition in STATIONS do
-        createStation(folder, definition)
-    end
+    connectFolder(stations)
 end
 
 return TrainingService
