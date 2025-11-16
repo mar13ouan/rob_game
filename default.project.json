@@ -16,6 +16,15 @@
       },
       "Components": {
         "$path": "src/ReplicatedStorage/Components"
+      },
+      "Remotes": {
+        "$className": "Folder",
+        "GameplayEvent": {
+          "$className": "RemoteEvent"
+        },
+        "GameplayFunction": {
+          "$className": "RemoteFunction"
+        }
       }
     }
   }
