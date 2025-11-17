@@ -1,6 +1,5 @@
 {
-  "name": "StarterMap",
-  "className": "Folder",
+  "className": "Model",
   "children": [
     {
       "name": "MeadowGround",
@@ -195,7 +194,7 @@
           ]
         },
         {
-          "name": "VitalityRings",
+          "name": "AgilityHoops",
           "className": "Part",
           "properties": {
             "Anchored": true,
@@ -204,22 +203,22 @@
             "Position": [0, 2, 58],
             "Orientation": [0, 0, 90],
             "Material": "Neon",
-            "Color": [0.533, 0.8, 0.933]
+            "Color": [0.4, 0.8, 0.533]
           },
           "attributes": {
-            "TrainingStat": "Vitality",
+            "TrainingStat": "Agility",
             "StatGain": 2,
-            "DisplayName": "Endurance Hoops",
+            "DisplayName": "Agility Hoops",
             "Cooldown": 4,
             "SessionLength": 1.5
           },
           "children": [
             {
-              "name": "VitalityPrompt",
+              "name": "AgilityPrompt",
               "className": "ProximityPrompt",
               "properties": {
                 "ActionText": "Train",
-                "ObjectText": "Endurance Hoops",
+                "ObjectText": "Agility Hoops",
                 "HoldDuration": 0.5,
                 "MaxActivationDistance": 8
               }

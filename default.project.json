@@ -4,7 +4,13 @@
     "$className": "DataModel",
     "Workspace": {
       "StarterMap": {
-        "$path": "src/Places/StarterMap"
+        "$path": "src/Places/StarterMap/StarterMap.model.json",
+        "Signage": {
+          "$path": "src/Places/StarterMap/Signage.server.lua"
+        },
+        "StarterGuide": {
+          "$path": "src/Places/StarterMap/StarterGuide.server.lua"
+        }
       }
     },
     "ServerScriptService": {
