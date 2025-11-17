@@ -5,6 +5,11 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local Remotes = require(ReplicatedStorage.Common.Remotes)
+local PetService = require(script.Parent.Parent:WaitForChild("PetService"))
+local StarterEggService = require(script.Parent.Parent:WaitForChild("StarterEggService"))
+local TrainingService = require(script.Parent.Parent:WaitForChild("TrainingService"))
+
 local GameConfig = require(ReplicatedStorage.Common.GameConfig)
 local StateMachine = require(ReplicatedStorage.Common.StateMachine)
 
@@ -14,6 +19,11 @@ function GameController.Init()
     -- Prepare any stateful services or references the controller will need.
     GameController.Config = GameConfig
     GameController.StateMachine = StateMachine
+    GameController.Remotes = Remotes
+
+    PetService.Init()
+    StarterEggService.Init(PetService)
+    TrainingService.Init()
 
     print(string.format(
         "[GameController] Initialized. Lobby duration: %ds",

@@ -2,6 +2,17 @@
   "name": "rob_game",
   "tree": {
     "$className": "DataModel",
+    "Workspace": {
+      "StarterMap": {
+        "$path": "src/Places/StarterMap/StarterMap.model.json",
+        "Signage": {
+          "$path": "src/Places/StarterMap/Signage.server.lua"
+        },
+        "StarterGuide": {
+          "$path": "src/Places/StarterMap/StarterGuide.server.lua"
+        }
+      }
+    },
     "ServerScriptService": {
       "$path": "src/ServerScriptService"
     },
@@ -9,6 +20,9 @@
       "StarterPlayerScripts": {
         "$path": "src/StarterPlayerScripts"
       }
+    },
+    "StarterGui": {
+      "$path": "src/StarterGui"
     },
     "ReplicatedStorage": {
       "Common": {
@@ -18,13 +32,13 @@
         "$path": "src/ReplicatedStorage/Components"
       },
       "Remotes": {
-        "$className": "Folder",
-        "GameplayEvent": {
-          "$className": "RemoteEvent"
-        },
-        "GameplayFunction": {
-          "$className": "RemoteFunction"
-        }
+        "$path": "src/ReplicatedStorage/Remotes"
+      },
+      "Items": {
+        "$path": "src/ReplicatedStorage/Items"
+      },
+      "Pets": {
+        "$path": "src/ReplicatedStorage/Pets"
       }
     }
   }
