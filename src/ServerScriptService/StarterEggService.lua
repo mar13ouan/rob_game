@@ -6,6 +6,7 @@
 local DataStoreService = game:GetService("DataStoreService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
 
 local StarterEgg = require(ReplicatedStorage.Items.Eggs.StarterEgg)
 
@@ -16,6 +17,7 @@ StarterEggService._store = DataStoreService:GetDataStore("StarterEggReward")
 StarterEggService._sessionAwards = {}
 StarterEggService._historicAwards = {}
 StarterEggService._petService = nil
+StarterEggService._initialized = false
 
 local function datastoreKey(userId: number): string
     return string.format("starterEgg_%d", userId)
@@ -44,8 +46,35 @@ local function safeSetAsync(store, key, value)
     end
 end
 
+local function resolvePetService()
+    if StarterEggService._petService then
+        return StarterEggService._petService
+    end
+
+    local ok, moduleOrErr = pcall(function()
+        return require(ServerScriptService:WaitForChild("PetService"))
+    end)
+
+    if ok then
+        StarterEggService._petService = moduleOrErr
+        return StarterEggService._petService
+    end
+
+    warn(string.format("[StarterEggService] Unable to load PetService: %s", tostring(moduleOrErr)))
+    return nil
+end
+
 function StarterEggService.Init(petService)
-    StarterEggService._petService = petService
+    if petService then
+        StarterEggService._petService = petService
+    end
+
+    if StarterEggService._initialized then
+        return
+    end
+
+    StarterEggService._initialized = true
+    resolvePetService()
 
     Players.PlayerAdded:Connect(function(player)
         StarterEggService:_preloadAwardFlag(player)
@@ -69,6 +98,10 @@ function StarterEggService:HasReceivedStarterEgg(player: Player): boolean
         return self._sessionAwards[userId]
     end
 
+    if self._historicAwards[userId] == nil then
+        self:_preloadAwardFlag(player)
+    end
+
     return self._historicAwards[userId] == true
 end
 
@@ -78,23 +111,37 @@ end
 
 function StarterEggService:TryAwardStarterEgg(player: Player)
     local userId = player.UserId
+    local petService = resolvePetService()
+    local existingPet = petService and petService.GetPetState and petService:GetPetState(player)
+    local alreadyAwarded = self:HasReceivedStarterEgg(player)
 
-    if self:HasReceivedStarterEgg(player) then
+    if alreadyAwarded and existingPet then
         return false, "You already received your starter egg."
     end
 
-    self._sessionAwards[userId] = true
-    self._historicAwards[userId] = true
+    if not alreadyAwarded then
+        self._sessionAwards[userId] = true
+        self._historicAwards[userId] = true
 
-    task.spawn(function()
-        safeSetAsync(self._store, datastoreKey(userId), true)
-    end)
+        task.spawn(function()
+            safeSetAsync(self._store, datastoreKey(userId), true)
+        end)
+    end
 
-    if self._petService and self._petService.GiveStarterEgg then
-        self._petService:GiveStarterEgg(player, StarterEgg)
+    if petService and petService.GiveStarterEgg then
+        petService:GiveStarterEgg(player, StarterEgg)
+    else
+        warn("[StarterEggService] PetService missing, cannot award starter egg")
+        return false, "Hmm, something went wrong. Please try again in a moment."
+    end
+
+    if alreadyAwarded then
+        return true, "Your companion rushes back to your side."
     end
 
     return true, StarterEgg.DialogueOnAward[2]
 end
+
+StarterEggService.Init()
 
 return StarterEggService
