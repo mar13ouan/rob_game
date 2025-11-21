@@ -4,6 +4,7 @@
 -- load correctly and gives us a single place to expand the flow later.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
 
 local Remotes = require(ReplicatedStorage.Common.Remotes)
 local PetService = require(script.Parent.Parent:WaitForChild("PetService"))
@@ -24,6 +25,21 @@ function GameController.Init()
     PetService.Init()
     StarterEggService.Init(PetService)
     TrainingService.Init()
+
+    -- Guarantee each player receives their starter companion without needing
+    -- to manually trigger the NPC dialogue first.
+    Players.PlayerAdded:Connect(function(player)
+        task.delay(0.1, function()
+            local granted, message = StarterEggService:TryAwardStarterEgg(player)
+            if granted then
+                Remotes.StarterGuideDialogue:FireClient(player, {
+                    Granted = true,
+                    Message = message,
+                    Dialogue = StarterEggService:GetAwardDialogue(),
+                })
+            end
+        end)
+    end)
 
     print(string.format(
         "[GameController] Initialized. Lobby duration: %ds",

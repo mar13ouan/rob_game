@@ -1,15 +1,15 @@
 --!strict
--- Lightweight data container representing the first egg each player receives.
+-- Data describing the starter egg reward granted by the guide NPC.
 
 local StarterEgg = {
     Id = "StarterEgg",
-    DisplayName = "Companion Egg",
-    Description = "A warm egg gifted by the village PNG. It contains a loyal sprout.",
+    DisplayName = "Starter Egg",
     HatchPetId = "Sproutling",
-    HatchDelaySeconds = 2,
+    HatchDelaySeconds = 1.5,
     DialogueOnAward = {
-        "Welcome to the meadow!",
-        "Take this egg—care for it and it will hatch into your first partner.",
+        "Voici ton premier compagnon !",
+        "Prends soin de lui et entraîne-le pour le faire évoluer.",
+        "Essaie les stations d'entraînement pour renforcer ses stats !",
     },
 }
 
