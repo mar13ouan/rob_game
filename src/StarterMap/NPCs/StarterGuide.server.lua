@@ -13,8 +13,12 @@ local guideModel = script.Parent
 local prompt: ProximityPrompt? = guideModel:FindFirstChildWhichIsA("ProximityPrompt", true)
 
 if not prompt then
-    warn("[StarterGuide] No ProximityPrompt found under StarterGuide NPC.")
-    return
+    prompt = Instance.new("ProximityPrompt")
+    prompt.Name = "StarterGuidePrompt"
+    prompt.ActionText = "Talk"
+    prompt.ObjectText = "Starter Guide"
+    prompt.HoldDuration = 0.5
+    prompt.Parent = guideModel:FindFirstChildWhichIsA("BasePart") or guideModel
 end
 
 prompt.Triggered:Connect(function(player)

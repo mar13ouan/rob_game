@@ -8,6 +8,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local StarterEgg = require(ReplicatedStorage.Items.Eggs.StarterEgg)
+local Remotes = require(ReplicatedStorage.Common.Remotes)
 
 local StarterEggService = {}
 StarterEggService.__index = StarterEggService
@@ -49,6 +50,10 @@ function StarterEggService.Init(petService)
 
     Players.PlayerAdded:Connect(function(player)
         StarterEggService:_preloadAwardFlag(player)
+
+        task.delay(1, function()
+            StarterEggService:_ensureStarterEgg(player)
+        end)
     end)
 
     Players.PlayerRemoving:Connect(function(player)
@@ -95,6 +100,23 @@ function StarterEggService:TryAwardStarterEgg(player: Player)
     end
 
     return true, StarterEgg.DialogueOnAward[2]
+end
+
+function StarterEggService:_ensureStarterEgg(player: Player)
+    if self:HasReceivedStarterEgg(player) then
+        return
+    end
+
+    local granted, message = self:TryAwardStarterEgg(player)
+    if not granted then
+        return
+    end
+
+    Remotes.StarterGuideDialogue:FireClient(player, {
+        Granted = granted,
+        Message = message,
+        Dialogue = StarterEgg.DialogueOnAward,
+    })
 end
 
 return StarterEggService
