@@ -1,0 +1,11 @@
+{
+  "$className": "Part",
+  "Name": "Baseplate",
+  "Anchored": true,
+  "Size": [512, 1, 512],
+  "Position": [0, -0.5, 0],
+  "Material": "Grass",
+  "Color": [0.337, 0.702, 0.463],
+  "TopSurface": "Smooth",
+  "BottomSurface": "Smooth"
+}

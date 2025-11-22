@@ -1,1 +1,0 @@
--- Client-side scripts for each player will live here.

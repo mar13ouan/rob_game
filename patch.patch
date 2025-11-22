@@ -1,0 +1,2433 @@
+ (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
+diff --git a/README.md b/README.md
+index 522dcfc6e12d0da1dd60386a44ff565d46fb8dc2..ecd3eae5048f0bf1a95b203f3a32bd0d1c1467b0 100644
+GIT binary patch
+literal 569
+zcmXw$-EI^y42AFW6c#I??n=z6-BzHzYx$A5qG~H4ijd;XxSh1#c!<3V^GG~LUyLLS
+zccY1Ye9m_ka61xnKsCy6%{V<~Ii%jXO9)Ju;6|PV#w<@13~WFHCQ}&8C}oAZ2@i}q
+zOh8O~N`?$tMHPNU8$jcJWP)d!b}{wZIk#BAdr6js)xCk$>Ql_LL*~_L3;xu@iDdAv
+zJxGGf`;Rww-<E)>2Y>G2p*$fBV%6>ubHrp#<8COfDer`>$(+qHFMs^Jec{{SSFEd7
+z|IcmaxmSMa+;t|^60*519|DYr6b49Cyvz_H)0}L?Y_U)R%NR@CYVzkHhUb4&FvUGu
+zlr(4lKu2O3D<XH=!RMp}6~p&R_{Yg$HtKf0E~KT?5d*Dz3A$buCiNdE<s*4_*1?yN
+zYA-vM-*9V(K1w?sB&AwX)vMlpl`M)Z0eKL$?dJU5+XAM%>6AhXI*01qrfc<s3b$>`
+SQyXYi)|O*>gmR+Q*15k!j=^*Q
+
+literal 26
+hcmezWPnki1p@<=$A&DWLA)O(SA(tVQftP`c0RUr)1(W~)
+
+diff --git a/default.project.json b/default.project.json
+index db3eec25c8c18b659916feec6a42cd0af9936ad2..feb17aa4164d9947b3b596b7303d6fa383ccf8a5 100644
+--- a/default.project.json
++++ b/default.project.json
+@@ -1,45 +1,20 @@
+ {
+   "name": "rob_game",
+   "tree": {
+     "$className": "DataModel",
+     "Workspace": {
+-      "StarterMap": {
+-        "$path": "src/Places/StarterMap/StarterMap.model.json",
+-        "Signage": {
+-          "$path": "src/Places/StarterMap/Signage.server.lua"
+-        },
+-        "StarterGuide": {
+-          "$path": "src/Places/StarterMap/StarterGuide.server.lua"
+-        }
+-      }
++      "$path": "src/Workspace"
++    },
++    "ReplicatedStorage": {
++      "$path": "src/ReplicatedStorage"
+     },
+     "ServerScriptService": {
+       "$path": "src/ServerScriptService"
+     },
+     "StarterPlayer": {
+       "StarterPlayerScripts": {
+         "$path": "src/StarterPlayerScripts"
+       }
+-    },
+-    "StarterGui": {
+-      "$path": "src/StarterGui"
+-    },
+-    "ReplicatedStorage": {
+-      "Common": {
+-        "$path": "src/ReplicatedStorage/Common"
+-      },
+-      "Components": {
+-        "$path": "src/ReplicatedStorage/Components"
+-      },
+-      "Remotes": {
+-        "$path": "src/ReplicatedStorage/Remotes"
+-      },
+-      "Items": {
+-        "$path": "src/ReplicatedStorage/Items"
+-      },
+-      "Pets": {
+-        "$path": "src/ReplicatedStorage/Pets"
+-      }
+     }
+   }
+ }
+diff --git a/src/Places/StarterMap/Signage.server.lua b/src/Places/StarterMap/Signage.server.lua
+deleted file mode 100644
+index 20389642645e2474b4c92aeb8713f358a4b7c677..0000000000000000000000000000000000000000
+--- a/src/Places/StarterMap/Signage.server.lua
++++ /dev/null
+@@ -1,116 +0,0 @@
+---!strict
+--- Creates a wooden placard near the training grounds so players immediately see
+--- how many sessions they need for each evolution path.
+-
+-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-local ServerScriptService = game:GetService("ServerScriptService")
+-
+-local MonsterConfig = require(ServerScriptService:WaitForChild("MonsterConfig"))
+-local TrainingConfig = require(ReplicatedStorage.Common.TrainingConfig)
+-
+-local map = script.Parent
+-if not map or not map:IsA("Model") then
+-    warn("[Signage] Expected script parent to be the StarterMap model")
+-    return
+-end
+-
+-local function ensurePart(model: Instance, name: string, size: Vector3, position: CFrame)
+-    local part = model:FindFirstChild(name)
+-    if not (part and part:IsA("BasePart")) then
+-        part = Instance.new("Part")
+-        part.Name = name
+-        part.Anchored = true
+-        part.Material = Enum.Material.Wood
+-        part.Color = Color3.fromRGB(124, 92, 62)
+-        part.CanCollide = true
+-        part.Parent = model
+-    end
+-
+-    part.Size = size
+-    part.CFrame = position
+-    return part
+-end
+-
+-local placard = map:FindFirstChild("EvolutionPlacard")
+-if not placard then
+-    placard = Instance.new("Model")
+-    placard.Name = "EvolutionPlacard"
+-    placard.Parent = map
+-end
+-
+-local boardPosition = CFrame.new(0, 4.5, 40) * CFrame.Angles(0, math.rad(180), 0)
+-local board = ensurePart(placard, "Board", Vector3.new(10, 5, 0.5), boardPosition)
+-local post = ensurePart(placard, "Post", Vector3.new(0.6, 5, 0.6), CFrame.new(0, 2.5, 40))
+-post.Color = board.Color
+-
+-local function ensureSurfaceGui()
+-    local gui = board:FindFirstChild("EvolutionText")
+-    if not (gui and gui:IsA("SurfaceGui")) then
+-        gui = Instance.new("SurfaceGui")
+-        gui.Name = "EvolutionText"
+-        gui.Adornee = board
+-        gui.Face = Enum.NormalId.Front
+-        gui.CanvasSize = Vector2.new(512, 256)
+-        gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+-        gui.Parent = board
+-    end
+-
+-    local label = gui:FindFirstChild("Label")
+-    if not (label and label:IsA("TextLabel")) then
+-        label = Instance.new("TextLabel")
+-        label.Name = "Label"
+-        label.BackgroundTransparency = 1
+-        label.Font = Enum.Font.GothamBold
+-        label.TextColor3 = Color3.fromRGB(255, 248, 224)
+-        label.TextWrapped = true
+-        label.TextXAlignment = Enum.TextXAlignment.Left
+-        label.TextYAlignment = Enum.TextYAlignment.Top
+-        label.TextSize = 26
+-        label.Size = UDim2.new(1, 0, 1, 0)
+-        label.Parent = gui
+-    end
+-
+-    return label
+-end
+-
+-local label = ensureSurfaceGui()
+-
+-local function sessionsNeeded(baseStat: number, requirement: number, statName: string)
+-    local diff = math.max(0, requirement - baseStat)
+-    local gain = TrainingConfig.GetStatGain(statName)
+-    if gain <= 0 then
+-        return 0
+-    end
+-
+-    return math.max(0, math.ceil(diff / gain))
+-end
+-
+-local function buildText()
+-    local pet = MonsterConfig.Sproutling
+-    if not pet then
+-        return "Train hard to evolve!"
+-    end
+-
+-    local lines = {
+-        "TRAINING BOARD",
+-        string.format("Each session = +%d stat points.", TrainingConfig.GetStatGain("Power")),
+-        "Choose a focus to decide your evolution:",
+-    }
+-
+-    for _, evolution in pet.Evolutions do
+-        local reqText = {}
+-        for statName, requirement in pairs(evolution.Requirements or {}) do
+-            local base = pet.BaseStats[statName] or 0
+-            local sessions = sessionsNeeded(base, requirement, statName)
+-            table.insert(reqText, string.format("%s %d trainings", statName, sessions))
+-        end
+-
+-        if #reqText > 0 then
+-            table.insert(lines, string.format("%s -> %s", table.concat(reqText, " + "), evolution.DisplayName))
+-        end
+-    end
+-
+-    return table.concat(lines, "\n")
+-end
+-
+-label.Text = buildText()
+diff --git a/src/Places/StarterMap/StarterGuide.server.lua b/src/Places/StarterMap/StarterGuide.server.lua
+deleted file mode 100644
+index d484a6c142b8ff6dd39c3780165872744ffb8b5f..0000000000000000000000000000000000000000
+--- a/src/Places/StarterMap/StarterGuide.server.lua
++++ /dev/null
+@@ -1,33 +0,0 @@
+---!strict
+--- Script that should be parented under the StarterGuide NPC model.  It listens
+--- for the player to interact via a ProximityPrompt and delegates to the
+--- StarterEggService to check whether the egg can be granted.
+-
+-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-local ServerScriptService = game:GetService("ServerScriptService")
+-
+-local StarterEggService = require(ServerScriptService:WaitForChild("StarterEggService"))
+-local Remotes = require(ReplicatedStorage.Common.Remotes)
+-
+-local guideModel = script.Parent:WaitForChild("StarterGuideNPC", 10)
+-if not guideModel or not guideModel:IsA("Model") then
+-    warn("[StarterGuide] Unable to find StarterGuideNPC model in StarterMap")
+-    return
+-end
+-
+-local prompt: ProximityPrompt? = guideModel:FindFirstChildWhichIsA("ProximityPrompt", true)
+-
+-if not prompt then
+-    warn("[StarterGuide] No ProximityPrompt found under StarterGuide NPC.")
+-    return
+-end
+-
+-prompt.Triggered:Connect(function(player)
+-    local granted, message = StarterEggService:TryAwardStarterEgg(player)
+-
+-    Remotes.StarterGuideDialogue:FireClient(player, {
+-        Granted = granted,
+-        Message = message,
+-        Dialogue = StarterEggService:GetAwardDialogue(),
+-    })
+-end)
+diff --git a/src/Places/StarterMap/StarterMap.model.json b/src/Places/StarterMap/StarterMap.model.json
+deleted file mode 100644
+index c3d6e30e171f00c6cc52440d0ae6c4221edec418..0000000000000000000000000000000000000000
+--- a/src/Places/StarterMap/StarterMap.model.json
++++ /dev/null
+@@ -1,261 +0,0 @@
+-{
+-  "className": "Model",
+-  "children": [
+-    {
+-      "name": "MeadowGround",
+-      "className": "Part",
+-      "properties": {
+-        "Anchored": true,
+-        "Size": [256, 1, 256],
+-        "Position": [0, -0.5, 0],
+-        "Material": "Grass",
+-        "Color": [0.298, 0.604, 0.298]
+-      }
+-    },
+-    {
+-      "name": "VillagePath",
+-      "className": "Part",
+-      "properties": {
+-        "Anchored": true,
+-        "Size": [80, 0.2, 24],
+-        "Position": [0, 0.1, -60],
+-        "Material": "Cobblestone",
+-        "Color": [0.545, 0.451, 0.314]
+-      }
+-    },
+-    {
+-      "name": "TrainingPlate",
+-      "className": "Part",
+-      "properties": {
+-        "Anchored": true,
+-        "Size": [80, 0.2, 40],
+-        "Position": [0, 0.1, 52],
+-        "Material": "Concrete",
+-        "Color": [0.392, 0.427, 0.463]
+-      }
+-    },
+-    {
+-      "name": "TrainingFenceLeft",
+-      "className": "Part",
+-      "properties": {
+-        "Anchored": true,
+-        "Size": [1, 6, 50],
+-        "Position": [-40, 3, 52],
+-        "Material": "WoodPlanks",
+-        "Color": [0.349, 0.2, 0.078]
+-      }
+-    },
+-    {
+-      "name": "TrainingFenceRight",
+-      "className": "Part",
+-      "properties": {
+-        "Anchored": true,
+-        "Size": [1, 6, 50],
+-        "Position": [40, 3, 52],
+-        "Material": "WoodPlanks",
+-        "Color": [0.349, 0.2, 0.078]
+-      }
+-    },
+-    {
+-      "name": "TrainingGate",
+-      "className": "Part",
+-      "properties": {
+-        "Anchored": true,
+-        "Size": [80, 6, 1],
+-        "Position": [0, 3, 30],
+-        "Material": "WoodPlanks",
+-        "Color": [0.545, 0.271, 0.075]
+-      }
+-    },
+-    {
+-      "name": "SpawnLocation",
+-      "className": "SpawnLocation",
+-      "properties": {
+-        "Name": "PlayerSpawn",
+-        "Position": [0, 2, -80],
+-        "Size": [6, 1, 6],
+-        "Transparency": 1,
+-        "Anchored": true,
+-        "CanCollide": false
+-      }
+-    },
+-    {
+-      "name": "StarterGuideNPC",
+-      "className": "Model",
+-      "children": [
+-        {
+-          "name": "GuideTorso",
+-          "className": "Part",
+-          "properties": {
+-            "Anchored": true,
+-            "Size": [3, 5, 1.5],
+-            "Position": [-16, 2.5, -72],
+-            "Color": [0.933, 0.796, 0.654],
+-            "Material": "SmoothPlastic"
+-          },
+-          "children": [
+-            {
+-              "name": "GuidePrompt",
+-              "className": "ProximityPrompt",
+-              "properties": {
+-                "ActionText": "Talk",
+-                "ObjectText": "PNG Guide",
+-                "HoldDuration": 0,
+-                "MaxActivationDistance": 12
+-              }
+-            }
+-          ]
+-        },
+-        {
+-          "name": "GuideHead",
+-          "className": "Part",
+-          "properties": {
+-            "Anchored": true,
+-            "Size": [3, 3, 1],
+-            "Position": [-16, 6, -72],
+-            "Color": [0.992, 0.898, 0.757],
+-            "Material": "SmoothPlastic"
+-          }
+-        },
+-        {
+-          "name": "GuideHat",
+-          "className": "Part",
+-          "properties": {
+-            "Anchored": true,
+-            "Size": [3.5, 0.6, 3.5],
+-            "Position": [-16, 7.5, -72],
+-            "Color": [0.196, 0.263, 0.4],
+-            "Material": "Fabric"
+-          }
+-        }
+-      ]
+-    },
+-    {
+-      "name": "StarterEggDisplay",
+-      "className": "Model",
+-      "children": [
+-        {
+-          "name": "Pedestal",
+-          "className": "Part",
+-          "properties": {
+-            "Anchored": true,
+-            "Size": [4, 1, 4],
+-            "Position": [-8, 0.5, -68],
+-            "Material": "WoodPlanks",
+-            "Color": [0.474, 0.333, 0.188]
+-          }
+-        },
+-        {
+-          "name": "Egg",
+-          "className": "Part",
+-          "properties": {
+-            "Anchored": true,
+-            "Shape": "Ball",
+-            "Size": [1.6, 2.2, 1.6],
+-            "Position": [-8, 1.8, -68],
+-            "Material": "SmoothPlastic",
+-            "Color": [1, 0.949, 0.8]
+-          }
+-        }
+-      ]
+-    },
+-    {
+-      "name": "TrainingStations",
+-      "className": "Folder",
+-      "children": [
+-        {
+-          "name": "PowerDummy",
+-          "className": "Part",
+-          "properties": {
+-            "Anchored": true,
+-            "Size": [3, 5, 3],
+-            "Position": [-16, 2.5, 52],
+-            "Material": "Wood",
+-            "Color": [0.8, 0.443, 0.137]
+-          },
+-          "attributes": {
+-            "TrainingStat": "Power",
+-            "StatGain": 2,
+-            "DisplayName": "Punch Dummy",
+-            "Cooldown": 4,
+-            "SessionLength": 1.5
+-          },
+-          "children": [
+-            {
+-              "name": "PowerPrompt",
+-              "className": "ProximityPrompt",
+-              "properties": {
+-                "ActionText": "Train",
+-                "ObjectText": "Punch Dummy",
+-                "HoldDuration": 0.5,
+-                "MaxActivationDistance": 8
+-              }
+-            }
+-          ]
+-        },
+-        {
+-          "name": "AgilityHoops",
+-          "className": "Part",
+-          "properties": {
+-            "Anchored": true,
+-            "Shape": "Cylinder",
+-            "Size": [2, 4, 2],
+-            "Position": [0, 2, 58],
+-            "Orientation": [0, 0, 90],
+-            "Material": "Neon",
+-            "Color": [0.4, 0.8, 0.533]
+-          },
+-          "attributes": {
+-            "TrainingStat": "Agility",
+-            "StatGain": 2,
+-            "DisplayName": "Agility Hoops",
+-            "Cooldown": 4,
+-            "SessionLength": 1.5
+-          },
+-          "children": [
+-            {
+-              "name": "AgilityPrompt",
+-              "className": "ProximityPrompt",
+-              "properties": {
+-                "ActionText": "Train",
+-                "ObjectText": "Agility Hoops",
+-                "HoldDuration": 0.5,
+-                "MaxActivationDistance": 8
+-              }
+-            }
+-          ]
+-        },
+-        {
+-          "name": "FocusCrystal",
+-          "className": "Part",
+-          "properties": {
+-            "Anchored": true,
+-            "Size": [2, 6, 2],
+-            "Position": [16, 3, 52],
+-            "Material": "Neon",
+-            "Color": [0.62, 0.325, 0.839]
+-          },
+-          "attributes": {
+-            "TrainingStat": "Focus",
+-            "StatGain": 2,
+-            "DisplayName": "Focus Crystal",
+-            "Cooldown": 4,
+-            "SessionLength": 1.5
+-          },
+-          "children": [
+-            {
+-              "name": "FocusPrompt",
+-              "className": "ProximityPrompt",
+-              "properties": {
+-                "ActionText": "Meditate",
+-                "ObjectText": "Focus Crystal",
+-                "HoldDuration": 0.5,
+-                "MaxActivationDistance": 8
+-              }
+-            }
+-          ]
+-        }
+-      ]
+-    }
+-  ]
+-}
+diff --git a/src/ReplicatedStorage/Common/GameConfig.lua b/src/ReplicatedStorage/Common/GameConfig.lua
+deleted file mode 100644
+index 2f5966a54c3c8b6f612a8c80d0c1a93102fdc324..0000000000000000000000000000000000000000
+--- a/src/ReplicatedStorage/Common/GameConfig.lua
++++ /dev/null
+@@ -1,38 +0,0 @@
+---!strict
+--- GameConfig centralizes all the tunable values that both the client and server
+--- need to agree on. Keeping them here helps ensure we only have a single source
+--- of truth for gameplay numbers.
+-
+-local GameConfig = {
+-    PLAYER = {
+-        -- Default walk speed of the player humanoid.
+-        SPEED = 16,
+-        -- Number of lives a user starts a match with.
+-        STARTING_LIVES = 3,
+-    },
+-
+-    MATCH = {
+-        -- How long the lobby phase lasts (seconds) before auto-start.
+-        LOBBY_DURATION = 30,
+-        -- How long a match lasts once it begins (seconds).
+-        MATCH_DURATION = 180,
+-        -- Time allowed to show post-match results (seconds).
+-        RESULTS_DURATION = 10,
+-    },
+-
+-    OBJECT_IDS = {
+-        -- Developer-assigned identifiers for collectible or interactive objects.
+-        COIN = "Coin",
+-        POWER_CORE = "PowerCore",
+-        EXIT_PORTAL = "ExitPortal",
+-    },
+-
+-    SCORES = {
+-        -- Score for collecting coins.
+-        COIN_VALUE = 10,
+-        -- Bonus applied when exiting with a Power Core.
+-        POWER_CORE_BONUS = 250,
+-    },
+-}
+-
+-return GameConfig
+diff --git a/src/ReplicatedStorage/Common/Remotes.lua b/src/ReplicatedStorage/Common/Remotes.lua
+deleted file mode 100644
+index 364cea47727fd0ef50e09c83f7d5128840d90050..0000000000000000000000000000000000000000
+--- a/src/ReplicatedStorage/Common/Remotes.lua
++++ /dev/null
+@@ -1,18 +0,0 @@
+---!strict
+--- Simple helper that returns typed references to every RemoteEvent/Function.
+-
+-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-
+-local RemotesFolder = ReplicatedStorage:WaitForChild("Remotes")
+-local PetEvents = RemotesFolder:WaitForChild("PetEvents")
+-
+-local Remotes = {
+-    Folder = RemotesFolder,
+-    StarterGuideDialogue = RemotesFolder:WaitForChild("StarterGuideDialogue"),
+-    PetEvents = PetEvents,
+-    PetStatUpdated = PetEvents:WaitForChild("PetStatUpdated"),
+-    PetEvolution = PetEvents:WaitForChild("PetEvolution"),
+-    TrainingPrompt = PetEvents:WaitForChild("TrainingPrompt"),
+-}
+-
+-return Remotes
+diff --git a/src/ReplicatedStorage/Common/StateMachine.lua b/src/ReplicatedStorage/Common/StateMachine.lua
+deleted file mode 100644
+index 0149c38036c8164f0ba6b62ea3d9b69ed6503cc3..0000000000000000000000000000000000000000
+--- a/src/ReplicatedStorage/Common/StateMachine.lua
++++ /dev/null
+@@ -1,42 +0,0 @@
+---!strict
+--- StateMachine formalizes the high-level phases of the game. Server scripts can
+--- use it to transition between phases while client scripts can observe the
+--- current state to adjust their UI or gameplay accordingly.
+-
+-local StateMachine = {}
+-
+-StateMachine.States = {
+-    Lobby = "Lobby",
+-    InProgress = "InProgress",
+-    Ended = "Ended",
+-}
+-
+--- Tracks the current state. Server code can replicate this value through
+--- RemoteEvents/Attributes as needed so that clients stay in sync.
+-StateMachine.CurrentState = StateMachine.States.Lobby
+-
+--- Called when the experience is ready for players to gather, configure their
+--- loadouts, or wait for additional participants. Use this to reset scores,
+--- spawn players in the lobby area, and start a countdown timer.
+-function StateMachine.StartLobby()
+-    StateMachine.CurrentState = StateMachine.States.Lobby
+-    -- TODO: Add logic to reset match data, teleport players, and schedule match start.
+-end
+-
+--- Transitions the game into the active match state. Invoke this once the lobby
+--- timer finishes or enough players have joined. Responsible for spawning
+--- objectives, enabling combat, and initializing round-specific systems.
+-function StateMachine.StartMatch()
+-    StateMachine.CurrentState = StateMachine.States.InProgress
+-    -- TODO: Add logic to spawn collectibles, enable damage, and track round stats.
+-end
+-
+--- Called whenever the match concludes either from victory conditions, time
+--- expiry, or lack of players. Use this to show results, award currency, and
+--- return players to the lobby after a delay.
+-function StateMachine.EndMatch()
+-    StateMachine.CurrentState = StateMachine.States.Ended
+-    -- TODO: Add logic to compute placement, grant rewards, and schedule lobby restart.
+-end
+-
+-return StateMachine
+diff --git a/src/ReplicatedStorage/Common/TrainingConfig.lua b/src/ReplicatedStorage/Common/TrainingConfig.lua
+deleted file mode 100644
+index c3b27491007379e88eed8d141f2bdbcff24bb1a6..0000000000000000000000000000000000000000
+--- a/src/ReplicatedStorage/Common/TrainingConfig.lua
++++ /dev/null
+@@ -1,23 +0,0 @@
+---!strict
+--- Shared numbers for training stations so server scripts, UI, and signage stay
+--- consistent when we communicate how many sessions a player needs.
+-
+-local TrainingConfig = {}
+-
+-TrainingConfig.DEFAULT_SESSION_LENGTH = 1.5
+-TrainingConfig.DEFAULT_COOLDOWN = 4
+-
+-local DEFAULT_STAT_GAIN = 2
+-
+-TrainingConfig.StatGainPerSession = {
+-    Power = DEFAULT_STAT_GAIN,
+-    Vitality = DEFAULT_STAT_GAIN,
+-    Focus = DEFAULT_STAT_GAIN,
+-    Agility = DEFAULT_STAT_GAIN,
+-}
+-
+-function TrainingConfig.GetStatGain(statName: string): number
+-    return TrainingConfig.StatGainPerSession[statName] or DEFAULT_STAT_GAIN
+-end
+-
+-return TrainingConfig
+diff --git a/src/ReplicatedStorage/Common/init.lua b/src/ReplicatedStorage/Common/init.lua
+deleted file mode 100644
+index 35f99d5aee28933e135659238f38e49753fcf08b..0000000000000000000000000000000000000000
+--- a/src/ReplicatedStorage/Common/init.lua
++++ /dev/null
+@@ -1,8 +0,0 @@
+--- Shared modules accessible from both server and client scripts.
+-
+-local Common = {}
+-
+-Common.GameConfig = require(script.GameConfig)
+-Common.StateMachine = require(script.StateMachine)
+-
+-return Common
+diff --git a/src/ReplicatedStorage/Components/init.lua b/src/ReplicatedStorage/Components/init.lua
+deleted file mode 100644
+index ced3fb2139e0b4ef428f4f88eed4628f87a65461..0000000000000000000000000000000000000000
+--- a/src/ReplicatedStorage/Components/init.lua
++++ /dev/null
+@@ -1 +0,0 @@
+--- Reusable component modules for the game's systems.
+diff --git a/src/ReplicatedStorage/Items/Eggs/StarterEgg.lua b/src/ReplicatedStorage/Items/Eggs/StarterEgg.lua
+deleted file mode 100644
+index 8ea5fcea071c681cde643a7838b944feba9bc124..0000000000000000000000000000000000000000
+--- a/src/ReplicatedStorage/Items/Eggs/StarterEgg.lua
++++ /dev/null
+@@ -1,16 +0,0 @@
+---!strict
+--- Lightweight data container representing the first egg each player receives.
+-
+-local StarterEgg = {
+-    Id = "StarterEgg",
+-    DisplayName = "Companion Egg",
+-    Description = "A warm egg gifted by the village PNG. It contains a loyal sprout.",
+-    HatchPetId = "Sproutling",
+-    HatchDelaySeconds = 2,
+-    DialogueOnAward = {
+-        "Welcome to the meadow!",
+-        "Take this egg—care for it and it will hatch into your first partner.",
+-    },
+-}
+-
+-return StarterEgg
+diff --git a/src/ReplicatedStorage/Pets/init.lua b/src/ReplicatedStorage/Pets/init.lua
+deleted file mode 100644
+index 6d90381ccbba14183735ca7dc46a1ce72d893dde..0000000000000000000000000000000000000000
+--- a/src/ReplicatedStorage/Pets/init.lua
++++ /dev/null
+@@ -1,54 +0,0 @@
+---!strict
+--- Utility functions for spawning simple placeholder pet models on the client.
+-
+-local PetLibrary = {}
+-
+-local function createPetModel(name: string, color: Color3, size: Vector3)
+-    local model = Instance.new("Model")
+-    model.Name = name
+-
+-    local body = Instance.new("Part")
+-    body.Name = "Body"
+-    body.Size = size
+-    body.Color = color
+-    body.Material = Enum.Material.SmoothPlastic
+-    body.CanCollide = false
+-    body.Anchored = true
+-    body.Parent = model
+-
+-    model.PrimaryPart = body
+-    return model
+-end
+-
+-local builders: {[string]: () -> Model} = {
+-    Sproutling = function()
+-        local model = createPetModel("Sproutling", Color3.fromRGB(121, 201, 97), Vector3.new(1.5, 1.5, 1.5))
+-        local leaf = Instance.new("Part")
+-        leaf.Name = "Leaf"
+-        leaf.Size = Vector3.new(0.2, 0.8, 1.2)
+-        leaf.Color = Color3.fromRGB(56, 142, 60)
+-        leaf.Material = Enum.Material.Grass
+-        leaf.CanCollide = false
+-        leaf.Anchored = true
+-        leaf.CFrame = model.PrimaryPart.CFrame * CFrame.new(0, 1, 0)
+-        leaf.Parent = model
+-        return model
+-    end,
+-    Bloomtail = function()
+-        return createPetModel("Bloomtail", Color3.fromRGB(255, 176, 189), Vector3.new(1.2, 1.2, 2))
+-    end,
+-    Thornback = function()
+-        return createPetModel("Thornback", Color3.fromRGB(108, 74, 47), Vector3.new(2, 1.2, 1.6))
+-    end,
+-    Aurorashade = function()
+-        return createPetModel("Aurorashade", Color3.fromRGB(123, 190, 255), Vector3.new(1.2, 1.2, 1.2))
+-    end,
+-}
+-
+-function PetLibrary.CreatePetModel(monsterId: string): Model
+-    local builder = builders[monsterId] or builders.Sproutling
+-    local model = builder():Clone()
+-    return model
+-end
+-
+-return PetLibrary
+diff --git a/src/ReplicatedStorage/Remotes/PetEvents.meta.json b/src/ReplicatedStorage/Remotes/PetEvents.meta.json
+deleted file mode 100644
+index 15700d790534cdd5a2c4f909ecb3911f9f3446c0..0000000000000000000000000000000000000000
+--- a/src/ReplicatedStorage/Remotes/PetEvents.meta.json
++++ /dev/null
+@@ -1,3 +0,0 @@
+-{
+-  "$className": "Folder"
+-}
+diff --git a/src/ReplicatedStorage/Remotes/PetEvents/PetEvolution.meta.json b/src/ReplicatedStorage/Remotes/PetEvents/PetEvolution.meta.json
+deleted file mode 100644
+index 3cabed15bd19acace4f4e4640f9cede20bcdc00e..0000000000000000000000000000000000000000
+--- a/src/ReplicatedStorage/Remotes/PetEvents/PetEvolution.meta.json
++++ /dev/null
+@@ -1,3 +0,0 @@
+-{
+-  "$className": "RemoteEvent"
+-}
+diff --git a/src/ReplicatedStorage/Remotes/PetEvents/PetStatUpdated.meta.json b/src/ReplicatedStorage/Remotes/PetEvents/PetStatUpdated.meta.json
+deleted file mode 100644
+index 3cabed15bd19acace4f4e4640f9cede20bcdc00e..0000000000000000000000000000000000000000
+--- a/src/ReplicatedStorage/Remotes/PetEvents/PetStatUpdated.meta.json
++++ /dev/null
+@@ -1,3 +0,0 @@
+-{
+-  "$className": "RemoteEvent"
+-}
+diff --git a/src/ReplicatedStorage/Remotes/PetEvents/TrainingPrompt.meta.json b/src/ReplicatedStorage/Remotes/PetEvents/TrainingPrompt.meta.json
+deleted file mode 100644
+index 3cabed15bd19acace4f4e4640f9cede20bcdc00e..0000000000000000000000000000000000000000
+--- a/src/ReplicatedStorage/Remotes/PetEvents/TrainingPrompt.meta.json
++++ /dev/null
+@@ -1,3 +0,0 @@
+-{
+-  "$className": "RemoteEvent"
+-}
+diff --git a/src/ReplicatedStorage/Remotes/SpellCast.event.json b/src/ReplicatedStorage/Remotes/SpellCast.event.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..164aa5807aa824b74310925db5817f1b26a08585
+--- /dev/null
++++ b/src/ReplicatedStorage/Remotes/SpellCast.event.json
+@@ -0,0 +1,4 @@
++{
++  "$className": "RemoteEvent",
++  "Name": "SpellCast"
++}
+diff --git a/src/ReplicatedStorage/Remotes/StarterGuideDialogue.meta.json b/src/ReplicatedStorage/Remotes/StarterGuideDialogue.meta.json
+deleted file mode 100644
+index 3cabed15bd19acace4f4e4640f9cede20bcdc00e..0000000000000000000000000000000000000000
+--- a/src/ReplicatedStorage/Remotes/StarterGuideDialogue.meta.json
++++ /dev/null
+@@ -1,3 +0,0 @@
+-{
+-  "$className": "RemoteEvent"
+-}
+diff --git a/src/ReplicatedStorage/SpellDefinitions.lua b/src/ReplicatedStorage/SpellDefinitions.lua
+new file mode 100644
+index 0000000000000000000000000000000000000000..540b634a078a6ff95ae1fb265620af0aa359fa7c
+--- /dev/null
++++ b/src/ReplicatedStorage/SpellDefinitions.lua
+@@ -0,0 +1,58 @@
++local SpellDefinitions = {
++    Fireball = {
++        KeyCodes = {
++            Enum.KeyCode.One,
++            Enum.KeyCode.KeypadOne,
++        },
++        Name = "Fireball",
++        Color = Color3.fromRGB(255, 128, 64),
++        TrailColor = ColorSequence.new(Color3.fromRGB(255, 170, 85), Color3.fromRGB(255, 64, 32)),
++        Speed = 130,
++        Lifetime = 6,
++        Cooldown = 1.25,
++        Particle = {
++            Color = ColorSequence.new(Color3.new(1, 0.75, 0.4)),
++            LightEmission = 0.7,
++            Texture = "rbxassetid://243660364",
++            Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1.2), NumberSequenceKeypoint.new(1, 0.4) }),
++        },
++    },
++    Thunderbolt = {
++        KeyCodes = {
++            Enum.KeyCode.Two,
++            Enum.KeyCode.KeypadTwo,
++        },
++        Name = "Thunderbolt",
++        Color = Color3.fromRGB(170, 213, 255),
++        TrailColor = ColorSequence.new(Color3.fromRGB(200, 225, 255), Color3.fromRGB(85, 170, 255)),
++        Speed = 160,
++        Lifetime = 5,
++        Cooldown = 1.5,
++        Particle = {
++            Color = ColorSequence.new(Color3.fromRGB(170, 225, 255)),
++            LightEmission = 1,
++            Texture = "rbxassetid://1248816150",
++            Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1.1), NumberSequenceKeypoint.new(1, 0.2) }),
++        },
++    },
++    WaterBall = {
++        KeyCodes = {
++            Enum.KeyCode.Three,
++            Enum.KeyCode.KeypadThree,
++        },
++        Name = "Water Ball",
++        Color = Color3.fromRGB(85, 170, 255),
++        TrailColor = ColorSequence.new(Color3.fromRGB(32, 170, 255), Color3.fromRGB(16, 60, 255)),
++        Speed = 110,
++        Lifetime = 7,
++        Cooldown = 1,
++        Particle = {
++            Color = ColorSequence.new(Color3.fromRGB(85, 170, 255)),
++            LightEmission = 0.4,
++            Texture = "rbxassetid://180690242",
++            Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(1, 0.6) }),
++        },
++    },
++}
++
++return SpellDefinitions
+diff --git a/src/ServerScriptService/Game/init.server.lua b/src/ServerScriptService/Game/init.server.lua
+deleted file mode 100644
+index ebd427bb4659293d05f53121103ed8208879536d..0000000000000000000000000000000000000000
+--- a/src/ServerScriptService/Game/init.server.lua
++++ /dev/null
+@@ -1,41 +0,0 @@
+---!strict
+--- Entry point for game-specific server logic. This script will eventually wire
+--- gameplay systems together, but for now it ensures the module dependencies
+--- load correctly and gives us a single place to expand the flow later.
+-
+-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-
+-local Remotes = require(ReplicatedStorage.Common.Remotes)
+-local PetService = require(script.Parent.Parent:WaitForChild("PetService"))
+-local StarterEggService = require(script.Parent.Parent:WaitForChild("StarterEggService"))
+-local TrainingService = require(script.Parent.Parent:WaitForChild("TrainingService"))
+-
+-local GameConfig = require(ReplicatedStorage.Common.GameConfig)
+-local StateMachine = require(ReplicatedStorage.Common.StateMachine)
+-
+-local GameController = {}
+-
+-function GameController.Init()
+-    -- Prepare any stateful services or references the controller will need.
+-    GameController.Config = GameConfig
+-    GameController.StateMachine = StateMachine
+-    GameController.Remotes = Remotes
+-
+-    PetService.Init()
+-    StarterEggService.Init(PetService)
+-    TrainingService.Init()
+-
+-    print(string.format(
+-        "[GameController] Initialized. Lobby duration: %ds",
+-        GameConfig.MATCH.LOBBY_DURATION
+-    ))
+-end
+-
+-function GameController.Start()
+-    -- Stub that will eventually coordinate the state machine and gameplay flow.
+-    print("[GameController] Start called. Current state:", StateMachine.CurrentState)
+-end
+-
+-GameController.Init()
+-
+-return GameController
+diff --git a/src/ServerScriptService/MonsterConfig.lua b/src/ServerScriptService/MonsterConfig.lua
+deleted file mode 100644
+index 5a73d94ba63a3cc3c0b050e4fc00e6075f8f61ff..0000000000000000000000000000000000000000
+--- a/src/ServerScriptService/MonsterConfig.lua
++++ /dev/null
+@@ -1,166 +0,0 @@
+---!strict
+--- Static data describing each monster species, including their base stats,
+--- available attacks, and potential evolution paths.
+-
+-export type Attack = {
+-    Name: string,
+-    Description: string,
+-    Power: number,
+-    Cost: number,
+-}
+-
+-export type Evolution = {
+-    Id: string,
+-    DisplayName: string,
+-    Requirements: {
+-        Power: number?,
+-        Vitality: number?,
+-        Focus: number?,
+-        Agility: number?,
+-    },
+-}
+-
+-export type Monster = {
+-    Id: string,
+-    DisplayName: string,
+-    BaseStats: {
+-        Power: number,
+-        Vitality: number,
+-        Focus: number,
+-        Agility: number,
+-    },
+-    Attacks: {Attack},
+-    Evolutions: {Evolution},
+-    ModelName: string,
+-}
+-
+-local Monsters: {[string]: Monster} = {
+-    Sproutling = {
+-        Id = "Sproutling",
+-        DisplayName = "Sproutling",
+-        ModelName = "Sproutling",
+-        BaseStats = {
+-            Power = 5,
+-            Vitality = 7,
+-            Focus = 4,
+-            Agility = 6,
+-        },
+-        Attacks = {
+-            {
+-                Name = "Leaf Flick",
+-                Description = "A quick flurry of leaves that chips away at foes.",
+-                Power = 8,
+-                Cost = 0,
+-            },
+-            {
+-                Name = "Sap Guard",
+-                Description = "Covers the pet in sap, raising vitality for a moment.",
+-                Power = 0,
+-                Cost = 5,
+-            },
+-        },
+-        Evolutions = {
+-            {
+-                Id = "Bloomtail",
+-                DisplayName = "Bloomtail",
+-                Requirements = {
+-                    Agility = 24,
+-                },
+-            },
+-            {
+-                Id = "Thornback",
+-                DisplayName = "Thornback",
+-                Requirements = {
+-                    Power = 25,
+-                },
+-            },
+-            {
+-                Id = "Aurorashade",
+-                DisplayName = "Aurorashade",
+-                Requirements = {
+-                    Focus = 20,
+-                },
+-            },
+-        },
+-    },
+-    Bloomtail = {
+-        Id = "Bloomtail",
+-        DisplayName = "Bloomtail",
+-        ModelName = "Bloomtail",
+-        BaseStats = {
+-            Power = 12,
+-            Vitality = 10,
+-            Focus = 9,
+-            Agility = 18,
+-        },
+-        Attacks = {
+-            {
+-                Name = "Petal Dash",
+-                Description = "Darts forward leaving a trail of petals.",
+-                Power = 16,
+-                Cost = 5,
+-            },
+-            {
+-                Name = "Gale Bloom",
+-                Description = "Creates a wind burst that boosts agility temporarily.",
+-                Power = 0,
+-                Cost = 8,
+-            },
+-        },
+-        Evolutions = {},
+-    },
+-    Thornback = {
+-        Id = "Thornback",
+-        DisplayName = "Thornback",
+-        ModelName = "Thornback",
+-        BaseStats = {
+-            Power = 20,
+-            Vitality = 14,
+-            Focus = 8,
+-            Agility = 10,
+-        },
+-        Attacks = {
+-            {
+-                Name = "Bramble Slam",
+-                Description = "A heavy slam that deals bonus damage to slowed enemies.",
+-                Power = 22,
+-                Cost = 10,
+-            },
+-            {
+-                Name = "Thorn Shield",
+-                Description = "Reflects a portion of melee damage for a short period.",
+-                Power = 0,
+-                Cost = 12,
+-            },
+-        },
+-        Evolutions = {},
+-    },
+-    Aurorashade = {
+-        Id = "Aurorashade",
+-        DisplayName = "Aurorashade",
+-        ModelName = "Aurorashade",
+-        BaseStats = {
+-            Power = 11,
+-            Vitality = 9,
+-            Focus = 20,
+-            Agility = 12,
+-        },
+-        Attacks = {
+-            {
+-                Name = "Lumen Pulse",
+-                Description = "A beam of prismatic light that scales with focus.",
+-                Power = 18,
+-                Cost = 12,
+-            },
+-            {
+-                Name = "Veil Bloom",
+-                Description = "Cloaks the pet, allowing it to dodge the next attack.",
+-                Power = 0,
+-                Cost = 15,
+-            },
+-        },
+-        Evolutions = {},
+-    },
+-}
+-
+-return Monsters
+diff --git a/src/ServerScriptService/PetService.lua b/src/ServerScriptService/PetService.lua
+deleted file mode 100644
+index a0f0b2bf28cb2f17584ba433331199a82f3ea66e..0000000000000000000000000000000000000000
+--- a/src/ServerScriptService/PetService.lua
++++ /dev/null
+@@ -1,234 +0,0 @@
+---!strict
+--- PetService manages the lifecycle of each player's companion: hatching,
+--- stat tracking, and evolution checks.  It exposes remote updates so the
+--- client HUD can reflect stat changes in real time.
+-
+-local Players = game:GetService("Players")
+-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-
+-local Remotes = require(ReplicatedStorage.Common.Remotes)
+-local TrainingConfig = require(ReplicatedStorage.Common.TrainingConfig)
+-local MonsterConfig = require(script.Parent:WaitForChild("MonsterConfig"))
+-
+-export type PetState = {
+-    Owner: Player,
+-    MonsterId: string,
+-    Stats: {
+-        Power: number,
+-        Vitality: number,
+-        Focus: number,
+-        Agility: number,
+-    },
+-    Experience: number,
+-}
+-
+-local PetService = {}
+-PetService.__index = PetService
+-PetService._pets = {}
+-
+-local function cloneStats(stats)
+-    return {
+-        Power = stats.Power,
+-        Vitality = stats.Vitality,
+-        Focus = stats.Focus,
+-        Agility = stats.Agility,
+-    }
+-end
+-
+-local function getMonster(monsterId: string)
+-    local monster = MonsterConfig[monsterId]
+-    if not monster then
+-        error(string.format("[PetService] Unknown monster id '%s'", tostring(monsterId)))
+-    end
+-
+-    return monster
+-end
+-
+-function PetService:_buildEvolutionTargets(petState: PetState)
+-    local monster = getMonster(petState.MonsterId)
+-    local targets = {}
+-
+-    for _, evolution in monster.Evolutions do
+-        local requirements = evolution.Requirements or {}
+-        local progress = {}
+-        local ready = true
+-
+-        for stat, requirement in pairs(requirements) do
+-            local current = petState.Stats[stat] or 0
+-            local diff = math.max(0, requirement - current)
+-            if diff > 0 then
+-                ready = false
+-            end
+-
+-            local statGain = TrainingConfig.GetStatGain(stat)
+-            local sessions = statGain > 0 and math.ceil(diff / statGain) or 0
+-
+-            progress[stat] = {
+-                Current = current,
+-                Required = requirement,
+-                SessionsRemaining = diff <= 0 and 0 or sessions,
+-                StatGain = statGain,
+-            }
+-        end
+-
+-        table.insert(targets, {
+-            Id = evolution.Id,
+-            DisplayName = evolution.DisplayName,
+-            Requirements = requirements,
+-            Progress = progress,
+-            Ready = ready,
+-        })
+-    end
+-
+-    return targets
+-end
+-
+-local function targetMargin(target)
+-    local margin = -math.huge
+-    for _, info in pairs(target.Progress or {}) do
+-        local diff = (info.Current or 0) - (info.Required or 0)
+-        if diff > margin then
+-            margin = diff
+-        end
+-    end
+-
+-    if margin == -math.huge then
+-        margin = 0
+-    end
+-
+-    return margin
+-end
+-
+-function PetService:_publishPetState(player: Player, petState: PetState, targets)
+-    if not petState then
+-        return
+-    end
+-
+-    local monster = getMonster(petState.MonsterId)
+-    Remotes.PetStatUpdated:FireClient(player, {
+-        MonsterId = petState.MonsterId,
+-        Stats = petState.Stats,
+-        Attacks = monster.Attacks,
+-        EvolutionTargets = targets or self:_buildEvolutionTargets(petState),
+-    })
+-end
+-
+-function PetService:_tryEvolve(player: Player, petState: PetState, targets)
+-    local monster = getMonster(petState.MonsterId)
+-    if #monster.Evolutions == 0 then
+-        return false
+-    end
+-
+-    targets = targets or self:_buildEvolutionTargets(petState)
+-
+-    local bestTarget = nil
+-    local bestMargin = -math.huge
+-
+-    for _, target in targets do
+-        if target.Ready then
+-            local margin = targetMargin(target)
+-            if margin > bestMargin then
+-                bestMargin = margin
+-                bestTarget = target
+-            end
+-        end
+-    end
+-
+-    if bestTarget then
+-        self:_applyEvolution(player, petState, bestTarget.Id)
+-        return true
+-    end
+-
+-    return false
+-end
+-
+-function PetService.Init()
+-    Players.PlayerRemoving:Connect(function(player)
+-        PetService._pets[player.UserId] = nil
+-    end)
+-end
+-
+-function PetService:GetPetState(player: Player): PetState?
+-    return self._pets[player.UserId]
+-end
+-
+-function PetService:GiveStarterEgg(player: Player, eggData)
+-    if not eggData then
+-        warn("[PetService] Starter egg data missing")
+-        return
+-    end
+-
+-    local delaySeconds = eggData.HatchDelaySeconds or 0
+-    task.delay(delaySeconds, function()
+-        self:_hatchEgg(player, eggData.HatchPetId)
+-    end)
+-end
+-
+-function PetService:_hatchEgg(player: Player, petId: string)
+-    local monster = getMonster(petId)
+-    local petState: PetState = {
+-        Owner = player,
+-        MonsterId = petId,
+-        Stats = cloneStats(monster.BaseStats),
+-        Experience = 0,
+-    }
+-
+-    self._pets[player.UserId] = petState
+-
+-    self:_publishPetState(player, petState)
+-end
+-
+-function PetService:AddExperience(player: Player, amount: number)
+-    local petState = self:GetPetState(player)
+-    if not petState then
+-        return
+-    end
+-
+-    petState.Experience += amount
+-end
+-
+-function PetService:AddStat(player: Player, statName: string, delta: number)
+-    local petState = self:GetPetState(player)
+-    if not petState then
+-        return
+-    end
+-
+-    if petState.Stats[statName] == nil then
+-        warn(string.format("[PetService] Stat %s does not exist", tostring(statName)))
+-        return
+-    end
+-
+-    petState.Stats[statName] += delta
+-
+-    local targets = self:_buildEvolutionTargets(petState)
+-    if not self:_tryEvolve(player, petState, targets) then
+-        self:_publishPetState(player, petState, targets)
+-    end
+-end
+-
+-function PetService:_applyEvolution(player: Player, petState: PetState, nextId: string)
+-    if petState.MonsterId == nextId then
+-        return
+-    end
+-
+-    local evolvedMonster = getMonster(nextId)
+-    petState.MonsterId = evolvedMonster.Id
+-    local newStats = cloneStats(petState.Stats)
+-    for statName, baseValue in pairs(evolvedMonster.BaseStats) do
+-        local current = newStats[statName]
+-        if current == nil or current < baseValue then
+-            newStats[statName] = baseValue
+-        end
+-    end
+-    petState.Stats = newStats
+-    petState.Experience = 0
+-
+-    Remotes.PetEvolution:FireClient(player, {
+-        MonsterId = petState.MonsterId,
+-        DisplayName = evolvedMonster.DisplayName,
+-    })
+-
+-    self:_publishPetState(player, petState)
+-end
+-
+-return PetService
+diff --git a/src/ServerScriptService/SpellHandler.server.lua b/src/ServerScriptService/SpellHandler.server.lua
+new file mode 100644
+index 0000000000000000000000000000000000000000..828de98aa13112e41373adfd837ad53cc9647e49
+--- /dev/null
++++ b/src/ServerScriptService/SpellHandler.server.lua
+@@ -0,0 +1,91 @@
++local ReplicatedStorage = game:GetService("ReplicatedStorage")
++local Debris = game:GetService("Debris")
++
++local SpellCastEvent = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("SpellCast")
++local SpellDefinitions = require(ReplicatedStorage:WaitForChild("SpellDefinitions"))
++
++local function createTrail(parent, colorSequence)
++    local attachment0 = Instance.new("Attachment")
++    attachment0.Name = "TrailAttachment0"
++    attachment0.Position = Vector3.new(0, 0.75, 0)
++    attachment0.Parent = parent
++
++    local attachment1 = Instance.new("Attachment")
++    attachment1.Name = "TrailAttachment1"
++    attachment1.Position = Vector3.new(0, -0.75, 0)
++    attachment1.Parent = parent
++
++    local trail = Instance.new("Trail")
++    trail.Lifetime = 0.35
++    trail.Color = colorSequence
++    trail.LightEmission = 1
++    trail.Attachment0 = attachment0
++    trail.Attachment1 = attachment1
++    trail.Parent = parent
++end
++
++local function applyParticleEffect(parent, particleConfig)
++    local particle = Instance.new("ParticleEmitter")
++    particle.Color = particleConfig.Color
++    particle.LightEmission = particleConfig.LightEmission
++    particle.Texture = particleConfig.Texture
++    particle.Size = particleConfig.Size
++    particle.Rate = 12
++    particle.Speed = NumberRange.new(3, 5)
++    particle.Lifetime = NumberRange.new(0.35, 0.75)
++    particle.Parent = parent
++end
++
++local function launchSpell(player, spellName)
++    local spell = SpellDefinitions[spellName]
++    if not spell then
++        return
++    end
++
++    local character = player.Character
++    local rootPart = character and character:FindFirstChild("HumanoidRootPart")
++    if not rootPart then
++        return
++    end
++
++    local projectile = Instance.new("Part")
++    projectile.Name = spellName .. "Projectile"
++    projectile.Shape = Enum.PartType.Ball
++    projectile.Color = spell.Color
++    projectile.Material = Enum.Material.Neon
++    projectile.Size = Vector3.new(2, 2, 2)
++    projectile.CFrame = rootPart.CFrame * CFrame.new(0, 2, -4)
++    projectile.CanCollide = false
++    projectile.Parent = workspace
++
++    createTrail(projectile, spell.TrailColor)
++    applyParticleEffect(projectile, spell.Particle)
++
++    local bodyVelocity = Instance.new("BodyVelocity")
++    bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
++    bodyVelocity.Velocity = rootPart.CFrame.LookVector * spell.Speed
++    bodyVelocity.Parent = projectile
++
++    projectile.Touched:Connect(function()
++        if not projectile or not projectile.Parent then
++            return
++        end
++
++        local flash = Instance.new("PointLight")
++        flash.Color = spell.Color
++        flash.Brightness = 4
++        flash.Range = 12
++        flash.Parent = projectile
++
++        projectile.Size = projectile.Size + Vector3.new(0.5, 0.5, 0.5)
++        task.delay(0.15, function()
++            if flash.Parent then
++                flash:Destroy()
++            end
++        end)
++    end)
++
++    Debris:AddItem(projectile, spell.Lifetime)
++end
++
++SpellCastEvent.OnServerEvent:Connect(launchSpell)
+diff --git a/src/ServerScriptService/StarterEggService.lua b/src/ServerScriptService/StarterEggService.lua
+deleted file mode 100644
+index 5ea7f21af97c53e073c0e2a2f886c9befa434ed0..0000000000000000000000000000000000000000
+--- a/src/ServerScriptService/StarterEggService.lua
++++ /dev/null
+@@ -1,100 +0,0 @@
+---!strict
+--- StarterEggService coordinates the NPC dialogue flow that awards each player
+--- their very first egg.  The service keeps track of who has already been given
+--- the reward through DataStoreService to ensure the giveaway only occurs once.
+-
+-local DataStoreService = game:GetService("DataStoreService")
+-local Players = game:GetService("Players")
+-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-
+-local StarterEgg = require(ReplicatedStorage.Items.Eggs.StarterEgg)
+-
+-local StarterEggService = {}
+-StarterEggService.__index = StarterEggService
+-
+-StarterEggService._store = DataStoreService:GetDataStore("StarterEggReward")
+-StarterEggService._sessionAwards = {}
+-StarterEggService._historicAwards = {}
+-StarterEggService._petService = nil
+-
+-local function datastoreKey(userId: number): string
+-    return string.format("starterEgg_%d", userId)
+-end
+-
+-local function safeGetAsync(store, key)
+-    local success, value = pcall(function()
+-        return store:GetAsync(key)
+-    end)
+-
+-    if not success then
+-        warn(string.format("[StarterEggService] Failed to read store for key %s: %s", key, tostring(value)))
+-        return nil
+-    end
+-
+-    return value
+-end
+-
+-local function safeSetAsync(store, key, value)
+-    local success, err = pcall(function()
+-        store:SetAsync(key, value)
+-    end)
+-
+-    if not success then
+-        warn(string.format("[StarterEggService] Failed to write store for key %s: %s", key, tostring(err)))
+-    end
+-end
+-
+-function StarterEggService.Init(petService)
+-    StarterEggService._petService = petService
+-
+-    Players.PlayerAdded:Connect(function(player)
+-        StarterEggService:_preloadAwardFlag(player)
+-    end)
+-
+-    Players.PlayerRemoving:Connect(function(player)
+-        StarterEggService._sessionAwards[player.UserId] = nil
+-        StarterEggService._historicAwards[player.UserId] = nil
+-    end)
+-end
+-
+-function StarterEggService:_preloadAwardFlag(player: Player)
+-    local key = datastoreKey(player.UserId)
+-    local value = safeGetAsync(self._store, key)
+-    self._historicAwards[player.UserId] = value == true
+-end
+-
+-function StarterEggService:HasReceivedStarterEgg(player: Player): boolean
+-    local userId = player.UserId
+-    if self._sessionAwards[userId] ~= nil then
+-        return self._sessionAwards[userId]
+-    end
+-
+-    return self._historicAwards[userId] == true
+-end
+-
+-function StarterEggService:GetAwardDialogue()
+-    return StarterEgg.DialogueOnAward
+-end
+-
+-function StarterEggService:TryAwardStarterEgg(player: Player)
+-    local userId = player.UserId
+-
+-    if self:HasReceivedStarterEgg(player) then
+-        return false, "You already received your starter egg."
+-    end
+-
+-    self._sessionAwards[userId] = true
+-    self._historicAwards[userId] = true
+-
+-    task.spawn(function()
+-        safeSetAsync(self._store, datastoreKey(userId), true)
+-    end)
+-
+-    if self._petService and self._petService.GiveStarterEgg then
+-        self._petService:GiveStarterEgg(player, StarterEgg)
+-    end
+-
+-    return true, StarterEgg.DialogueOnAward[2]
+-end
+-
+-return StarterEggService
+diff --git a/src/ServerScriptService/TrainingService.lua b/src/ServerScriptService/TrainingService.lua
+deleted file mode 100644
+index 151a8a0599fe0b2ef4a093430966eb2c12560fa5..0000000000000000000000000000000000000000
+--- a/src/ServerScriptService/TrainingService.lua
++++ /dev/null
+@@ -1,98 +0,0 @@
+---!strict
+--- Wires up the hand-crafted training stations that live inside the StarterMap.
+--- Each station is a BasePart with TrainingStat/StatGain attributes and a
+--- ProximityPrompt child that lets the player start a mini session.
+-
+-local Workspace = game:GetService("Workspace")
+-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-local ServerScriptService = game:GetService("ServerScriptService")
+-
+-local Remotes = require(ReplicatedStorage.Common.Remotes)
+-local TrainingConfig = require(ReplicatedStorage.Common.TrainingConfig)
+-local PetService = require(ServerScriptService:WaitForChild("PetService"))
+-
+-local TrainingService = {}
+-
+-local WIRED_STATIONS: {[Instance]: boolean} = {}
+-
+-local function getPrompt(station: BasePart)
+-    local prompt = station:FindFirstChildWhichIsA("ProximityPrompt")
+-    if not prompt then
+-        prompt = Instance.new("ProximityPrompt")
+-        prompt.Name = "TrainPrompt"
+-        prompt.ActionText = "Train"
+-        prompt.ObjectText = station.Name
+-        prompt.HoldDuration = 1
+-        prompt.MaxActivationDistance = 8
+-        prompt.Parent = station
+-    end
+-
+-    return prompt
+-end
+-
+-local function wireStation(station: BasePart)
+-    if WIRED_STATIONS[station] then
+-        return
+-    end
+-
+-    local statToTrain = station:GetAttribute("TrainingStat") or "Power"
+-    local statGain = station:GetAttribute("StatGain") or TrainingConfig.GetStatGain(statToTrain)
+-    local cooldown = station:GetAttribute("Cooldown") or TrainingConfig.DEFAULT_COOLDOWN
+-    local sessionLength = station:GetAttribute("SessionLength") or TrainingConfig.DEFAULT_SESSION_LENGTH
+-
+-    local prompt = getPrompt(station)
+-    prompt.ObjectText = station:GetAttribute("DisplayName") or prompt.ObjectText
+-    prompt.ActionText = string.format("+%d %s", statGain, statToTrain)
+-
+-    local lastUse: {[number]: number} = {}
+-    prompt.Triggered:Connect(function(player)
+-        local now = os.clock()
+-        local previous = lastUse[player.UserId] or 0
+-        if now - previous < cooldown then
+-            Remotes.TrainingPrompt:FireClient(player, {
+-                Success = false,
+-                Reason = "Catch your breath first!",
+-            })
+-            return
+-        end
+-
+-        lastUse[player.UserId] = now
+-        task.delay(sessionLength, function()
+-            PetService:AddStat(player, statToTrain, statGain)
+-            Remotes.TrainingPrompt:FireClient(player, {
+-                Success = true,
+-                Stat = statToTrain,
+-                Gain = statGain,
+-            })
+-        end)
+-    end)
+-
+-    WIRED_STATIONS[station] = true
+-end
+-
+-local function connectFolder(folder: Instance)
+-    local function tryWire(instance: Instance)
+-        if instance:IsA("BasePart") and instance:GetAttribute("TrainingStat") then
+-            wireStation(instance)
+-        end
+-    end
+-
+-    for _, descendant in folder:GetDescendants() do
+-        tryWire(descendant)
+-    end
+-
+-    folder.DescendantAdded:Connect(tryWire)
+-end
+-
+-function TrainingService.Init()
+-    local map = Workspace:WaitForChild("StarterMap")
+-    local stations = map:WaitForChild("TrainingStations", 10)
+-    if not stations then
+-        warn("[TrainingService] Could not find TrainingStations folder")
+-        return
+-    end
+-
+-    connectFolder(stations)
+-end
+-
+-return TrainingService
+diff --git a/src/ServerScriptService/init.lua b/src/ServerScriptService/init.lua
+deleted file mode 100644
+index 999d88811357cc7043c1cd801b1715120adb6f26..0000000000000000000000000000000000000000
+--- a/src/ServerScriptService/init.lua
++++ /dev/null
+@@ -1 +0,0 @@
+--- Server-side scripts for core gameplay logic will be added here.
+diff --git a/src/StarterGui/PetHUD/PetHUD.client.lua b/src/StarterGui/PetHUD/PetHUD.client.lua
+deleted file mode 100644
+index 700502cf02d5d5901db46c8c8a8153f6cd5bc63e..0000000000000000000000000000000000000000
+--- a/src/StarterGui/PetHUD/PetHUD.client.lua
++++ /dev/null
+@@ -1,268 +0,0 @@
+---!strict
+--- Builds the Pet HUD at runtime and listens for remote updates about the pet's
+--- stats, evolutions, and NPC dialogue.
+-
+-local Players = game:GetService("Players")
+-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-
+-local Remotes = require(ReplicatedStorage.Common.Remotes)
+-
+-local localPlayer = Players.LocalPlayer
+-local playerGui = localPlayer:WaitForChild("PlayerGui")
+-
+-local screenGui = Instance.new("ScreenGui")
+-screenGui.Name = "PetHUD"
+-screenGui.ResetOnSpawn = false
+-screenGui.IgnoreGuiInset = true
+-screenGui.Parent = playerGui
+-
+-local container = Instance.new("Frame")
+-container.AnchorPoint = Vector2.new(0, 1)
+-container.Position = UDim2.new(0, 16, 1, -16)
+-container.Size = UDim2.new(0, 280, 0, 240)
+-container.BackgroundColor3 = Color3.fromRGB(25, 30, 35)
+-container.BackgroundTransparency = 0.1
+-container.BorderSizePixel = 0
+-container.Parent = screenGui
+-
+-local uiCorner = Instance.new("UICorner")
+-uiCorner.CornerRadius = UDim.new(0, 8)
+-uiCorner.Parent = container
+-
+-local title = Instance.new("TextLabel")
+-title.Size = UDim2.new(1, -20, 0, 28)
+-title.Position = UDim2.new(0, 10, 0, 6)
+-title.BackgroundTransparency = 1
+-title.Font = Enum.Font.GothamBold
+-title.TextXAlignment = Enum.TextXAlignment.Left
+-title.TextColor3 = Color3.fromRGB(255, 255, 255)
+-title.TextScaled = true
+-title.Text = "Pet Status"
+-title.Parent = container
+-
+-local statsList = Instance.new("Frame")
+-statsList.Position = UDim2.new(0, 10, 0, 38)
+-statsList.Size = UDim2.new(1, -20, 0, 80)
+-statsList.BackgroundTransparency = 1
+-statsList.Parent = container
+-
+-local statLabels: {[string]: TextLabel} = {}
+-local statNames = {"Power", "Vitality", "Focus", "Agility"}
+-
+-for index, statName in ipairs(statNames) do
+-    local label = Instance.new("TextLabel")
+-    label.BackgroundTransparency = 1
+-    label.Font = Enum.Font.GothamSemibold
+-    label.TextXAlignment = Enum.TextXAlignment.Left
+-    label.TextColor3 = Color3.fromRGB(200, 230, 200)
+-    label.TextScaled = true
+-    label.Size = UDim2.new(1, 0, 0, 18)
+-    label.Position = UDim2.new(0, 0, 0, (index - 1) * 18)
+-    label.Text = string.format("%s: 0", statName)
+-    label.Parent = statsList
+-    statLabels[statName] = label
+-end
+-
+-local evolutionSection = Instance.new("Frame")
+-evolutionSection.Position = UDim2.new(0, 10, 0, 126)
+-evolutionSection.Size = UDim2.new(1, -20, 0, 92)
+-evolutionSection.BackgroundTransparency = 0.2
+-evolutionSection.BackgroundColor3 = Color3.fromRGB(15, 20, 26)
+-evolutionSection.Parent = container
+-
+-local evolutionCorner = Instance.new("UICorner")
+-evolutionCorner.CornerRadius = UDim.new(0, 6)
+-evolutionCorner.Parent = evolutionSection
+-
+-local evolutionTitle = Instance.new("TextLabel")
+-evolutionTitle.BackgroundTransparency = 1
+-evolutionTitle.Font = Enum.Font.GothamSemibold
+-evolutionTitle.TextColor3 = Color3.fromRGB(255, 240, 200)
+-evolutionTitle.TextXAlignment = Enum.TextXAlignment.Left
+-evolutionTitle.Text = "Evolution Goals"
+-evolutionTitle.Size = UDim2.new(1, -10, 0, 20)
+-evolutionTitle.Position = UDim2.new(0, 6, 0, 4)
+-evolutionTitle.Parent = evolutionSection
+-
+-local evolutionList = Instance.new("Frame")
+-evolutionList.BackgroundTransparency = 1
+-evolutionList.Position = UDim2.new(0, 6, 0, 26)
+-evolutionList.Size = UDim2.new(1, -12, 1, -32)
+-evolutionList.Parent = evolutionSection
+-
+-local evolutionLayout = Instance.new("UIListLayout")
+-evolutionLayout.FillDirection = Enum.FillDirection.Vertical
+-evolutionLayout.Padding = UDim.new(0, 2)
+-evolutionLayout.Parent = evolutionList
+-
+-local statusLabel = Instance.new("TextLabel")
+-statusLabel.BackgroundTransparency = 0.35
+-statusLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+-statusLabel.Font = Enum.Font.Gotham
+-statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+-statusLabel.TextWrapped = true
+-statusLabel.TextXAlignment = Enum.TextXAlignment.Left
+-statusLabel.Position = UDim2.new(0, 10, 1, -44)
+-statusLabel.Size = UDim2.new(1, -20, 0, 34)
+-statusLabel.Visible = false
+-statusLabel.Parent = container
+-
+-local dialogueFrame = Instance.new("Frame")
+-dialogueFrame.AnchorPoint = Vector2.new(0.5, 1)
+-dialogueFrame.Position = UDim2.new(0.5, 0, 1, -260)
+-dialogueFrame.Size = UDim2.new(0, 320, 0, 120)
+-dialogueFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 25)
+-dialogueFrame.BackgroundTransparency = 0.2
+-dialogueFrame.BorderSizePixel = 0
+-dialogueFrame.Visible = false
+-dialogueFrame.Parent = screenGui
+-
+-local dialogueCorner = Instance.new("UICorner")
+-dialogueCorner.CornerRadius = UDim.new(0, 10)
+-dialogueCorner.Parent = dialogueFrame
+-
+-local dialogueText = Instance.new("TextLabel")
+-dialogueText.BackgroundTransparency = 1
+-dialogueText.TextWrapped = true
+-dialogueText.TextColor3 = Color3.fromRGB(255, 255, 255)
+-dialogueText.Font = Enum.Font.Gotham
+-dialogueText.TextXAlignment = Enum.TextXAlignment.Left
+-dialogueText.TextYAlignment = Enum.TextYAlignment.Top
+-dialogueText.Position = UDim2.new(0, 10, 0, 10)
+-dialogueText.Size = UDim2.new(1, -20, 1, -20)
+-dialogueText.Parent = dialogueFrame
+-
+-dialogueText.Text = ""
+-
+-local statusTweenId = 0
+-local dialogueTweenId = 0
+-local evolutionEntries: {[string]: TextLabel} = {}
+-
+-local function showStatus(message: string)
+-    statusTweenId += 1
+-    local id = statusTweenId
+-    statusLabel.Visible = true
+-    statusLabel.Text = message
+-    task.delay(3, function()
+-        if statusTweenId == id then
+-            statusLabel.Visible = false
+-        end
+-    end)
+-end
+-
+-local function showDialogue(lines)
+-    dialogueTweenId += 1
+-    local id = dialogueTweenId
+-    if typeof(lines) == "string" then
+-        lines = {lines}
+-    end
+-
+-    dialogueFrame.Visible = true
+-    dialogueText.Text = table.concat(lines, "
+-")
+-
+-    task.delay(5, function()
+-        if dialogueTweenId == id then
+-            dialogueFrame.Visible = false
+-        end
+-    end)
+-end
+-
+-local function formatEvolutionText(target)
+-    local progress = target.Progress or {}
+-    local statSegments = {}
+-
+-    for statName, info in pairs(progress) do
+-        local current = info.Current or 0
+-        local required = info.Required or 0
+-        local remaining = info.SessionsRemaining or 0
+-        if remaining <= 0 then
+-            table.insert(statSegments, string.format("%s ready (%d/%d)", statName, current, required))
+-        else
+-            local plural = remaining == 1 and "training" or "trainings"
+-            table.insert(statSegments, string.format("%s %d/%d (%d %s left)", statName, current, required, remaining, plural))
+-        end
+-    end
+-
+-    local requirementsText = #statSegments > 0 and table.concat(statSegments, " | ") or "Train to unlock"
+-
+-    if target.Ready then
+-        return string.format("%s ready to evolve!", target.DisplayName), Color3.fromRGB(126, 255, 191)
+-    end
+-
+-    return string.format("%s: %s", target.DisplayName, requirementsText), Color3.fromRGB(255, 214, 170)
+-end
+-
+-local function syncEvolutions(targets)
+-    local active: {[string]: boolean} = {}
+-    for _, target in ipairs(targets or {}) do
+-        local label = evolutionEntries[target.Id]
+-        if not label then
+-            label = Instance.new("TextLabel")
+-            label.BackgroundTransparency = 1
+-            label.Font = Enum.Font.Gotham
+-            label.TextWrapped = true
+-            label.TextXAlignment = Enum.TextXAlignment.Left
+-            label.AutomaticSize = Enum.AutomaticSize.Y
+-            label.Size = UDim2.new(1, 0, 0, 20)
+-            label.Parent = evolutionList
+-            evolutionEntries[target.Id] = label
+-        end
+-
+-        local text, color = formatEvolutionText(target)
+-        label.Text = text
+-        label.TextColor3 = color
+-        label.Visible = true
+-        active[target.Id] = true
+-    end
+-
+-    for id, label in pairs(evolutionEntries) do
+-        if not active[id] then
+-            label.Visible = false
+-        end
+-    end
+-
+-    if not targets or #targets == 0 then
+-        evolutionTitle.Text = "Evolution Goals"
+-    end
+-end
+-
+-local function updateStats(payload)
+-    if payload.MonsterId then
+-        title.Text = string.format("%s Status", payload.MonsterId)
+-    end
+-
+-    if payload.Stats then
+-        for statName, label in pairs(statLabels) do
+-            local value = payload.Stats[statName] or 0
+-            label.Text = string.format("%s: %d", statName, value)
+-        end
+-    end
+-
+-    syncEvolutions(payload.EvolutionTargets)
+-end
+-
+-Remotes.PetStatUpdated.OnClientEvent:Connect(updateStats)
+-
+-Remotes.PetEvolution.OnClientEvent:Connect(function(payload)
+-    updateStats(payload)
+-    showStatus(string.format("%s evolved!", payload.DisplayName))
+-end)
+-
+-Remotes.TrainingPrompt.OnClientEvent:Connect(function(payload)
+-    if payload.Success then
+-        showStatus(string.format("+%d %s", payload.Gain or 0, payload.Stat or "Stat"))
+-    else
+-        showStatus(payload.Reason or "Training unavailable")
+-    end
+-end)
+-
+-Remotes.StarterGuideDialogue.OnClientEvent:Connect(function(payload)
+-    if payload.Dialogue then
+-        showDialogue(payload.Dialogue)
+-    end
+-
+-    if payload.Message then
+-        showStatus(payload.Message)
+-    end
+-end)
+diff --git a/src/StarterMap/NPCs/StarterGuide.server.lua b/src/StarterMap/NPCs/StarterGuide.server.lua
+deleted file mode 100644
+index 5d2a30aecf651c35092e9f76255993ee4ce5990c..0000000000000000000000000000000000000000
+--- a/src/StarterMap/NPCs/StarterGuide.server.lua
++++ /dev/null
+@@ -1,28 +0,0 @@
+---!strict
+--- Script that should be parented under the StarterGuide NPC model.  It listens
+--- for the player to interact via a ProximityPrompt and delegates to the
+--- StarterEggService to check whether the egg can be granted.
+-
+-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-local ServerScriptService = game:GetService("ServerScriptService")
+-
+-local StarterEggService = require(ServerScriptService:WaitForChild("StarterEggService"))
+-local Remotes = require(ReplicatedStorage.Common.Remotes)
+-
+-local guideModel = script.Parent
+-local prompt: ProximityPrompt? = guideModel:FindFirstChildWhichIsA("ProximityPrompt", true)
+-
+-if not prompt then
+-    warn("[StarterGuide] No ProximityPrompt found under StarterGuide NPC.")
+-    return
+-end
+-
+-prompt.Triggered:Connect(function(player)
+-    local granted, message = StarterEggService:TryAwardStarterEgg(player)
+-
+-    Remotes.StarterGuideDialogue:FireClient(player, {
+-        Granted = granted,
+-        Message = message,
+-        Dialogue = StarterEggService:GetAwardDialogue(),
+-    })
+-end)
+diff --git a/src/StarterMap/Training/TrainingStation.server.lua b/src/StarterMap/Training/TrainingStation.server.lua
+deleted file mode 100644
+index a5bcc56601097e3fe28f2624556436834fa74b77..0000000000000000000000000000000000000000
+--- a/src/StarterMap/Training/TrainingStation.server.lua
++++ /dev/null
+@@ -1,46 +0,0 @@
+---!strict
+--- Generic training station script.  Place it under a training prop with a
+--- ProximityPrompt and set the attributes below to configure the stat gains.
+-
+-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-local ServerScriptService = game:GetService("ServerScriptService")
+-
+-local Remotes = require(ReplicatedStorage.Common.Remotes)
+-local PetService = require(ServerScriptService:WaitForChild("PetService"))
+-
+-local station = script.Parent
+-local prompt: ProximityPrompt? = station:FindFirstChildWhichIsA("ProximityPrompt", true)
+-
+-if not prompt then
+-    warn("[TrainingStation] Missing ProximityPrompt under", station:GetFullName())
+-    return
+-end
+-
+-local statToTrain = station:GetAttribute("TrainingStat") or "Power"
+-local statGain = station:GetAttribute("StatGain") or 1
+-local cooldown = station:GetAttribute("Cooldown") or 4
+-local sessionLength = station:GetAttribute("SessionLength") or 1.5
+-
+-local cooldowns: {[number]: number} = {}
+-
+-prompt.Triggered:Connect(function(player)
+-    local now = os.clock()
+-    local last = cooldowns[player.UserId] or 0
+-    if now - last < cooldown then
+-        Remotes.TrainingPrompt:FireClient(player, {
+-            Success = false,
+-            Reason = "Training station is recharging.",
+-        })
+-        return
+-    end
+-
+-    cooldowns[player.UserId] = now
+-    task.delay(sessionLength, function()
+-        PetService:AddStat(player, statToTrain, statGain)
+-        Remotes.TrainingPrompt:FireClient(player, {
+-            Success = true,
+-            Stat = statToTrain,
+-            Gain = statGain,
+-        })
+-    end)
+-end)
+diff --git a/src/StarterPlayerScripts/Player/PetFollower.client.lua b/src/StarterPlayerScripts/Player/PetFollower.client.lua
+deleted file mode 100644
+index 9355d63f7a706ff9e84d932dc22c2d58208acdd6..0000000000000000000000000000000000000000
+--- a/src/StarterPlayerScripts/Player/PetFollower.client.lua
++++ /dev/null
+@@ -1,88 +0,0 @@
+---!strict
+--- Keeps the player's companion model spawned and following slightly behind.
+-
+-local Players = game:GetService("Players")
+-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-local RunService = game:GetService("RunService")
+-
+-local Remotes = require(ReplicatedStorage.Common.Remotes)
+-local PetLibrary = require(ReplicatedStorage:WaitForChild("Pets"))
+-
+-local localPlayer = Players.LocalPlayer
+-local currentPetModel: Model? = nil
+-local followConnection: RBXScriptConnection? = nil
+-
+-local function cleanupPet()
+-    if followConnection then
+-        followConnection:Disconnect()
+-        followConnection = nil
+-    end
+-
+-    if currentPetModel then
+-        currentPetModel:Destroy()
+-        currentPetModel = nil
+-    end
+-end
+-
+-local function ensureCharacter()
+-    local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+-    local humanoidRootPart = character:WaitForChild("HumanoidRootPart") :: BasePart
+-    return character, humanoidRootPart
+-end
+-
+-local function startFollow()
+-    if followConnection then
+-        followConnection:Disconnect()
+-    end
+-
+-    followConnection = RunService.Heartbeat:Connect(function()
+-        if not currentPetModel then
+-            return
+-        end
+-
+-        local character = localPlayer.Character
+-        if not character then
+-            return
+-        end
+-
+-        local root = character:FindFirstChild("HumanoidRootPart") :: BasePart?
+-        if not root then
+-            return
+-        end
+-
+-        local targetCFrame = root.CFrame * CFrame.new(0, -1.5, 4)
+-        local currentCFrame = currentPetModel:GetPivot()
+-        local lerped = currentCFrame:Lerp(targetCFrame, 0.2)
+-        currentPetModel:PivotTo(lerped)
+-    end)
+-end
+-
+-local function spawnPet(monsterId: string?)
+-    cleanupPet()
+-    if not monsterId then
+-        return
+-    end
+-
+-    local _, root = ensureCharacter()
+-    local model = PetLibrary.CreatePetModel(monsterId)
+-    model.Parent = workspace
+-    currentPetModel = model
+-    model:PivotTo(root.CFrame * CFrame.new(0, -1.5, 4))
+-    startFollow()
+-end
+-
+-localPlayer.CharacterAdded:Connect(function()
+-    if currentPetModel then
+-        startFollow()
+-    end
+-end)
+-
+-Remotes.PetStatUpdated.OnClientEvent:Connect(function(payload)
+-    if payload.MonsterId then
+-        if currentPetModel and currentPetModel.Name == payload.MonsterId then
+-            return
+-        end
+-
+-        spawnPet(payload.MonsterId)
+-    end
+-end)
+diff --git a/src/StarterPlayerScripts/Player/Spellcasting.client.lua b/src/StarterPlayerScripts/Player/Spellcasting.client.lua
+deleted file mode 100644
+index ac72766a64f3b5324f95b3124100561f04bdc9f6..0000000000000000000000000000000000000000
+--- a/src/StarterPlayerScripts/Player/Spellcasting.client.lua
++++ /dev/null
+@@ -1,213 +0,0 @@
+---!strict
+--- Allows the player to swap between three spells (fireball, lightning, and water jet)
+--- and cast the equipped spell with a left mouse click.
+-
+-local Players = game:GetService("Players")
+-local Debris = game:GetService("Debris")
+-local UserInputService = game:GetService("UserInputService")
+-
+-local localPlayer = Players.LocalPlayer
+-local mouse = localPlayer:GetMouse()
+-
+-export type SpellDefinition = {
+-    id: string,
+-    key: Enum.KeyCode,
+-    name: string,
+-    color: Color3,
+-    speed: number,
+-    size: number,
+-    lifetime: number,
+-    setup: (Part) -> (),
+-}
+-
+-local function addTrail(part: Part, color: Color3)
+-    local attachment0 = Instance.new("Attachment")
+-    attachment0.Position = Vector3.new(0, 0, -part.Size.Z / 2)
+-    attachment0.Parent = part
+-
+-    local attachment1 = Instance.new("Attachment")
+-    attachment1.Position = Vector3.new(0, 0, part.Size.Z / 2)
+-    attachment1.Parent = part
+-
+-    local trail = Instance.new("Trail")
+-    trail.Color = ColorSequence.new(color)
+-    trail.Lifetime = 0.35
+-    trail.LightEmission = 1
+-    trail.Attachment0 = attachment0
+-    trail.Attachment1 = attachment1
+-    trail.Parent = part
+-end
+-
+-local spells: { SpellDefinition } = {
+-    {
+-        id = "fireball",
+-        key = Enum.KeyCode.One,
+-        name = "Boule de feu",
+-        color = Color3.fromRGB(255, 140, 0),
+-        speed = 120,
+-        size = 1.8,
+-        lifetime = 4,
+-        setup = function(part: Part)
+-            part.Material = Enum.Material.Neon
+-            part.Shape = Enum.PartType.Ball
+-
+-            local fire = Instance.new("Fire")
+-            fire.Heat = 6
+-            fire.Size = 12
+-            fire.Color = Color3.fromRGB(255, 200, 80)
+-            fire.SecondaryColor = Color3.fromRGB(255, 120, 40)
+-            fire.Parent = part
+-
+-            addTrail(part, part.Color)
+-        end,
+-    },
+-    {
+-        id = "lightning",
+-        key = Enum.KeyCode.Two,
+-        name = "Éclair",
+-        color = Color3.fromRGB(255, 255, 120),
+-        speed = 150,
+-        size = 1.2,
+-        lifetime = 2.5,
+-        setup = function(part: Part)
+-            part.Material = Enum.Material.ForceField
+-            part.Shape = Enum.PartType.Cylinder
+-            part.Size = Vector3.new(part.Size.X * 0.4, part.Size.Y, part.Size.Z * 2)
+-
+-            local light = Instance.new("PointLight")
+-            light.Brightness = 4
+-            light.Range = 18
+-            light.Color = part.Color
+-            light.Parent = part
+-
+-            addTrail(part, Color3.fromRGB(255, 255, 220))
+-        end,
+-    },
+-    {
+-        id = "water_jet",
+-        key = Enum.KeyCode.Three,
+-        name = "Pistolet à eau",
+-        color = Color3.fromRGB(80, 180, 255),
+-        speed = 100,
+-        size = 1,
+-        lifetime = 3,
+-        setup = function(part: Part)
+-            part.Material = Enum.Material.Glass
+-            part.Shape = Enum.PartType.Ball
+-
+-            local particles = Instance.new("ParticleEmitter")
+-            particles.Rate = 60
+-            particles.Speed = NumberRange.new(10, 16)
+-            particles.Lifetime = NumberRange.new(0.4, 0.7)
+-            particles.Texture = "rbxassetid://4835879088" -- water droplet
+-            particles.Color = ColorSequence.new(part.Color)
+-            particles.Size = NumberSequence.new({
+-                NumberSequenceKeypoint.new(0, 0.45),
+-                NumberSequenceKeypoint.new(0.6, 0.35),
+-                NumberSequenceKeypoint.new(1, 0),
+-            })
+-            particles.Parent = part
+-
+-            addTrail(part, part.Color)
+-        end,
+-    },
+-}
+-
+-local equippedSpell: SpellDefinition = spells[1]
+-
+-local function ensureCharacter()
+-    local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+-    local humanoidRootPart = character:WaitForChild("HumanoidRootPart") :: BasePart
+-    return character, humanoidRootPart
+-end
+-
+-local function notifySpellChange(spell: SpellDefinition)
+-    local StarterGui = game:GetService("StarterGui")
+-    pcall(function()
+-        StarterGui:SetCore("SendNotification", {
+-            Title = "Sort équipé",
+-            Text = string.format("%s (%s)", spell.name, tostring(spell.key.Name)),
+-            Duration = 2,
+-        })
+-    end)
+-end
+-
+-local function equipSpellByKey(keyCode: Enum.KeyCode)
+-    for _, spell in ipairs(spells) do
+-        if spell.key == keyCode then
+-            equippedSpell = spell
+-            notifySpellChange(spell)
+-            break
+-        end
+-    end
+-end
+-
+-local function spawnProjectile(spell: SpellDefinition)
+-    local character, root = ensureCharacter()
+-    local targetPosition = mouse.Hit and mouse.Hit.Position or (root.Position + root.CFrame.LookVector * 60)
+-    local direction = (targetPosition - root.Position)
+-    if direction.Magnitude < 1 then
+-        direction = root.CFrame.LookVector
+-    else
+-        direction = direction.Unit
+-    end
+-
+-    local spawnPosition = root.Position + Vector3.new(0, 1.5, 0) + (direction * 4)
+-
+-    local projectile = Instance.new("Part")
+-    projectile.Name = spell.name
+-    projectile.Color = spell.color
+-    projectile.Size = Vector3.new(spell.size, spell.size, spell.size)
+-    projectile.CFrame = CFrame.new(spawnPosition, spawnPosition + direction)
+-    projectile.CanCollide = false
+-    projectile.Anchored = false
+-    projectile.Massless = true
+-    projectile.Parent = workspace
+-
+-    spell.setup(projectile)
+-
+-    local velocity = Instance.new("BodyVelocity")
+-    velocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+-    velocity.Velocity = direction * spell.speed
+-    velocity.Parent = projectile
+-
+-    projectile.Touched:Connect(function(hit: BasePart)
+-        if not projectile or not projectile.Parent then
+-            return
+-        end
+-
+-        if hit:IsDescendantOf(character) then
+-            return
+-        end
+-
+-        local flash = Instance.new("Explosion")
+-        flash.Position = projectile.Position
+-        flash.BlastRadius = 4
+-        flash.BlastPressure = 0
+-        flash.DestroyJointRadiusPercent = 0
+-        flash.Parent = workspace
+-
+-        projectile:Destroy()
+-    end)
+-
+-    Debris:AddItem(projectile, spell.lifetime)
+-end
+-
+-local function onInputBegan(input: InputObject, processed: boolean)
+-    if processed then
+-        return
+-    end
+-
+-    if input.UserInputType == Enum.UserInputType.Keyboard then
+-        equipSpellByKey(input.KeyCode)
+-    end
+-end
+-
+-mouse.Button1Down:Connect(function()
+-    spawnProjectile(equippedSpell)
+-end)
+-
+-UserInputService.InputBegan:Connect(onInputBegan)
+-
+--- Equip the default spell at startup so the player knows what is active
+-notifySpellChange(equippedSpell)
+diff --git a/src/StarterPlayerScripts/Player/init.client.lua b/src/StarterPlayerScripts/Player/init.client.lua
+deleted file mode 100644
+index fc9bb173f309966c670c882835e7c544eb0e7824..0000000000000000000000000000000000000000
+--- a/src/StarterPlayerScripts/Player/init.client.lua
++++ /dev/null
+@@ -1,7 +0,0 @@
+---!strict
+--- Minimal client bootstrap to verify Rojo linking and future remote connectivity.
+-
+-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-local Remotes = require(ReplicatedStorage.Common.Remotes)
+-
+-print(string.format("[Player] Connected to Remotes. Pet events ready: %s", Remotes.PetEvents.Name))
+diff --git a/src/StarterPlayerScripts/SpellInput.client.lua b/src/StarterPlayerScripts/SpellInput.client.lua
+new file mode 100644
+index 0000000000000000000000000000000000000000..eb0447f5bc1d5f50e500567e9c1bb0ceacdf6295
+--- /dev/null
++++ b/src/StarterPlayerScripts/SpellInput.client.lua
+@@ -0,0 +1,75 @@
++local ContextActionService = game:GetService("ContextActionService")
++local ReplicatedStorage = game:GetService("ReplicatedStorage")
++local Players = game:GetService("Players")
++
++local SpellCastEvent = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("SpellCast")
++local SpellDefinitions = require(ReplicatedStorage:WaitForChild("SpellDefinitions"))
++
++local player = Players.LocalPlayer
++local character = player.Character or player.CharacterAdded:Wait()
++
++player.CharacterAdded:Connect(function(newCharacter)
++    character = newCharacter
++end)
++
++local activeCooldowns = {}
++
++local function setCooldown(spellName, cooldown)
++    activeCooldowns[spellName] = true
++    task.delay(cooldown, function()
++        activeCooldowns[spellName] = nil
++    end)
++end
++
++local function playCastAnimation()
++    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
++    if not humanoid then
++        return
++    end
++
++    local animation = Instance.new("Animation")
++    animation.AnimationId = "rbxassetid://507771019" -- simple arm swing
++
++    local track = humanoid:LoadAnimation(animation)
++    track:Play(0.1, 1, 1.25)
++    track.Stopped:Connect(function()
++        animation:Destroy()
++    end)
++end
++
++local function bindSpellAction(spellName)
++    return function(_, inputState)
++        if inputState ~= Enum.UserInputState.Begin then
++            return Enum.ContextActionResult.Pass
++        end
++
++        if activeCooldowns[spellName] then
++            return Enum.ContextActionResult.Sink
++        end
++
++        if not character or not character.Parent then
++            return Enum.ContextActionResult.Pass
++        end
++
++        SpellCastEvent:FireServer(spellName)
++        playCastAnimation()
++
++        local spell = SpellDefinitions[spellName]
++        if spell then
++            setCooldown(spellName, spell.Cooldown)
++        end
++
++        return Enum.ContextActionResult.Sink
++    end
++end
++
++for spellName, config in pairs(SpellDefinitions) do
++    for _, keyCode in ipairs(config.KeyCodes) do
++        ContextActionService:BindAction(spellName .. "_cast", bindSpellAction(spellName), false, keyCode)
++    end
++end
++
++game:GetService("StarterGui"):SetCore("ChatMakeSystemMessage", {
++    Text = "Press 1/2/3 (AZERTY: &/é/\") or numpad 1/2/3 to cast Fireball, Thunderbolt, and Water Ball!",
++    Color = Color3.fromRGB(255, 255, 255),
++})
+diff --git a/src/StarterPlayerScripts/init.lua b/src/StarterPlayerScripts/init.lua
+deleted file mode 100644
+index 9235072b99d8d140a59377076738720e13f74c63..0000000000000000000000000000000000000000
+--- a/src/StarterPlayerScripts/init.lua
++++ /dev/null
+@@ -1 +0,0 @@
+--- Client-side scripts for each player will live here.
+diff --git a/src/Workspace/Baseplate.part.json b/src/Workspace/Baseplate.part.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..06e8c3c9f61b827e6e8242a1cf6e3b01c3fe355d
+--- /dev/null
++++ b/src/Workspace/Baseplate.part.json
+@@ -0,0 +1,11 @@
++{
++  "$className": "Part",
++  "Name": "Baseplate",
++  "Anchored": true,
++  "Size": [512, 1, 512],
++  "Position": [0, -0.5, 0],
++  "Material": "Grass",
++  "Color": [0.337, 0.702, 0.463],
++  "TopSurface": "Smooth",
++  "BottomSurface": "Smooth"
++}
+ 
+EOF
+)
